@@ -1,233 +1,1644 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aura AI - Free & Open</title>
+    <title>Aura AI — Your Personal Assistant</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <meta name="description"
+        content="Aura AI is a multimodal AI workspace with chat, voice, image generation and video generation.">
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        aura: { dark: '#0f172a', light: '#f8fafc', primary: '#3b82f6' }
-                    }
-                }
-            }
-        }
-    </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
     <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- React & ReactDOM -->
+
+    <!-- React 18 -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel -->
+
+    <!-- Babel (JSX transform) -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Marked (for Markdown parsing) -->
+
+    <!-- Marked.js (Markdown) -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link rel="icon" type="image/png" href="logo.png">
+
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Inter', sans-serif; background-color: #0f172a; color: white; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.3); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(156, 163, 175, 0.5); }
-        
-        .glass-pill { 
-            background: rgba(30, 41, 59, 0.8); 
-            backdrop-filter: blur(24px); 
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.1); 
-            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5); 
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-        
-        .bg-custom-wallpaper {
-            background-image: url('https://images.unsplash.com/photo-1550684848-fac1c5b4e853?q=80&w=2564&auto=format&fit=crop');
-            background-size: cover;
-            background-position: center;
+
+        html,
+        body,
+        #root {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
         }
-        
-        .prose pre { background-color: #1e293b; padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin-top: 0.5rem; margin-bottom: 0.5rem; border: 1px solid rgba(255,255,255,0.05); }
-        .prose code { color: #38bdf8; font-family: monospace; font-size: 0.9em; padding: 0.1rem 0.3rem; background: rgba(0,0,0,0.2); border-radius: 0.25rem; }
-        .prose p { margin-bottom: 0.75rem; }
-        .prose p:last-child { margin-bottom: 0; }
-        .prose ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 0.75rem; }
-        .prose ol { list-style-type: decimal; margin-left: 1.5rem; margin-bottom: 0.75rem; }
-        .prose h1, .prose h2, .prose h3 { font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #f8fafc; }
-        .prose a { color: #60a5fa; text-decoration: underline; }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5 {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Subtle grid background */
+        .bg-grid {
+            background-color: #f8fafc;
+            background-image:
+                linear-gradient(rgba(226, 232, 240, 0.5) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(226, 232, 240, 0.5) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 99px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Fade-in animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scaleUp {
+            from {
+                opacity: 0;
+                transform: scale(0.92);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes micPulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.25s ease-out both;
+        }
+
+        .scale-up {
+            animation: scaleUp 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+        .mic-pulse {
+            animation: micPulse 1.2s ease-in-out infinite;
+        }
+
+        /* Sidebar transition */
+        .sidebar-open {
+            width: 288px;
+        }
+
+        .sidebar-close {
+            width: 0;
+        }
+
+        .sidebar-base {
+            transition: width 0.3s ease;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        /* Markdown prose */
+        .prose {
+            font-size: 14.5px;
+            line-height: 1.65;
+            color: #334155;
+        }
+
+        .prose p {
+            margin-bottom: 0.8rem;
+        }
+
+        .prose p:last-child {
+            margin-bottom: 0;
+        }
+
+        .prose h1,
+        .prose h2,
+        .prose h3 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            color: #0f172a;
+            margin: 1rem 0 0.4rem;
+        }
+
+        .prose h1 {
+            font-size: 1.2rem;
+        }
+
+        .prose h2 {
+            font-size: 1.1rem;
+        }
+
+        .prose h3 {
+            font-size: 1rem;
+        }
+
+        .prose ul,
+        .prose ol {
+            margin-left: 1.2rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .prose ul {
+            list-style: disc;
+        }
+
+        .prose ol {
+            list-style: decimal;
+        }
+
+        .prose li {
+            margin-bottom: 0.2rem;
+        }
+
+        .prose strong {
+            color: #0f172a;
+            font-weight: 600;
+        }
+
+        .prose em {
+            font-style: italic;
+        }
+
+        .prose a {
+            color: #4f46e5;
+            text-decoration: underline;
+        }
+
+        .prose blockquote {
+            border-left: 4px solid #7c3aed;
+            padding-left: 1rem;
+            color: #64748b;
+            font-style: italic;
+            margin: 1rem 0;
+        }
+
+        .prose table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 13px;
+        }
+
+        .prose th,
+        .prose td {
+            border: 1px solid #e2e8f0;
+            padding: 0.45rem 0.7rem;
+            text-align: left;
+        }
+
+        .prose th {
+            background: #f1f5f9;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .prose pre {
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            overflow-x: auto;
+            margin: 0.8rem 0;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .prose code {
+            font-family: monospace;
+            font-size: 0.88em;
+            padding: 0.15rem 0.35rem;
+            background: #f1f5f9;
+            color: #b91c1c;
+            border-radius: 0.25rem;
+        }
+
+        .prose pre code {
+            background: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        /* Image overlay */
+        .img-card {
+            position: relative;
+        }
+
+        .img-card:hover .img-overlay {
+            opacity: 1;
+        }
+
+        .img-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            opacity: 0;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        /* Mode pill tab active */
+        .mode-pill {
+            cursor: pointer;
+            padding: 6px 14px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.18s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .mode-pill.active {
+            background: white;
+            color: #4f46e5;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .mode-pill.inactive {
+            color: #64748b;
+        }
+
+        .mode-pill.inactive:hover {
+            color: #1e293b;
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Chat bubble */
+        .bubble-user {
+            background: #4f46e5;
+            color: white;
+            border-radius: 1.25rem 1.25rem 0.25rem 1.25rem;
+        }
+
+        .bubble-ai {
+            background: white;
+            color: #1e293b;
+            border: 1px solid #e2e8f0;
+            border-radius: 1.25rem 1.25rem 1.25rem 0.25rem;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Hover show copy bar */
+        .msg-group:hover .msg-actions {
+            opacity: 1;
+        }
+
+        .msg-actions {
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        /* Bounce dots */
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-5px);
+            }
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6366f1;
+            display: inline-block;
+        }
+
+        .dot:nth-child(1) {
+            animation: bounce 1s ease-in-out infinite;
+        }
+
+        .dot:nth-child(2) {
+            animation: bounce 1s ease-in-out 0.18s infinite;
+        }
+
+        .dot:nth-child(3) {
+            animation: bounce 1s ease-in-out 0.36s infinite;
+        }
+
+        /* Video player */
+        .video-frame {
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Top Bar Tabs */
+        .tab-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 5px;
+            padding-left: 20px;
+            padding-right: 20px;
+            overflow-x: auto;
+            flex: 1;
+            height: 40px;
+            scrollbar-width: none;
+        }
+
+        .tab-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .curvy-tab {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #e2e8f0;
+            border: 1.5px solid #cbd5e1;
+            border-bottom: none;
+            border-radius: 12px 12px 0 0;
+            font-size: 12.5px;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            max-width: 170px;
+            height: 36px;
+            position: relative;
+        }
+
+        .curvy-tab.active {
+            background: white;
+            color: #4f46e5;
+            border-color: #cbd5e1;
+            border-bottom-color: white;
+            font-weight: 600;
+            box-shadow: 0 -3px 8px rgba(0, 0, 0, 0.04);
+            height: 38px;
+            z-index: 10;
+        }
+
+        .curvy-tab:hover:not(.active) {
+            background: #cbd5e1;
+            color: #1e293b;
+        }
+
+        .curvy-tab-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #94a3b8;
+            font-size: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            transition: all 0.15s;
+        }
+
+        .curvy-tab-close:hover {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+
+        .new-tab-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 30px;
+            background: #ede9fe;
+            border: 1.5px solid #d8b4fe;
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            color: #7c3aed;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 0px;
+            flex-shrink: 0;
+        }
+
+        .new-tab-btn:hover {
+            background: #c084fc;
+            color: white;
+            border-color: #c084fc;
+        }
     </style>
 </head>
-<body class="h-screen w-screen relative flex flex-col bg-custom-wallpaper">
-    <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-[2px] z-0"></div>
-    <div id="root" class="h-full w-full z-10"></div>
+
+<body class="bg-grid">
+
+    <div id="root" style="height:100%;width:100%;display:flex;"></div>
+
     <script type="text/babel">
-        const { useState, useEffect, useRef } = React;
+        /* ── React hooks ── */
+        const { useState, useEffect, useRef, useCallback } = React;
 
-        const App = () => {
-            const [messages, setMessages] = useState([
-                { role: 'assistant', content: 'Hello! I am Aura AI, an open and free AI model built to mimic Gemini.\n\nI operate completely silently in the background with zero popups, zero API keys needed, and complete privacy. How can I assist you today?' }
-            ]);
-            const [input, setInput] = useState('');
-            const [loading, setLoading] = useState(false);
-            const messagesEndRef = useRef(null);
+        /* ── Constants ── */
+        const DEFAULT_KEY = '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';
+        const DEFAULT_SYS = 'You are Aura AI, a highly advanced AI assistant.';
+        const DEFAULT_MODEL = 'google/gemini-2.5-flash';
 
-            const scrollToBottom = () => {
-                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-            };
+        const STARTERS = [
+            { icon: 'fa-brain', title: 'Explain a concept', desc: 'JavaScript Event Loop', prompt: 'Explain how the JavaScript Event Loop works with a simple real-world analogy.' },
+            { icon: 'fa-code', title: 'Refactor code', desc: 'Optimize array search', prompt: 'Show me how to optimize a JavaScript array search and explain O(N) vs O(log N).' },
+            { icon: 'fa-lightbulb', title: 'Creative writing', desc: 'Write a short story', prompt: 'Write a captivating short story about a time traveler who discovers an unexpected truth about the future.' },
+            { icon: 'fa-graduation-cap', title: 'Learn something', desc: 'Quantum computing basics', prompt: 'Explain quantum computing in simple terms, including qubits and superposition.' },
+        ];
+
+        /* ── Logo Image with gradient fallback ── */
+        const Logo = ({ size = 32, className = '' }) => {
+            const [err, setErr] = useState(false);
+            if (err) {
+                return (
+                    <div
+                        className={className}
+                        style={{
+                            width: size, height: size, borderRadius: 10,
+                            background: 'linear-gradient(135deg, #6366f1, #7c3aed)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: 'white', flexShrink: 0,
+                        }}
+                    >
+                        <i className="fas fa-sparkles" style={{ fontSize: size * 0.4 }}></i>
+                    </div>
+                );
+            }
+            return (
+                <img
+                    src="logo.png"
+                    alt="Aura"
+                    width={size}
+                    height={size}
+                    onError={() => setErr(true)}
+                    style={{ width: size, height: size, borderRadius: 10, objectFit: 'cover', flexShrink: 0 }}
+                    className={className}
+                />
+            );
+        };
+
+        /* ── Image result card ── */
+        const ImageCard = ({ url, prompt }) => (
+            <div className="img-card" style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #e2e8f0', background: 'white', width: '100%', maxWidth: 420 }}>
+                <div style={{ position: 'relative', paddingBottom: '100%', background: '#f1f5f9' }}>
+                    <img src={url} alt={prompt} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    <div className="img-overlay">
+                        <a href={url} target="_blank" download="aura-image.jpg"
+                            style={{ width: 44, height: 44, borderRadius: '50%', background: 'white', color: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.2)', textDecoration: 'none', fontSize: 14 }}
+                            title="Download">
+                            <i className="fas fa-download"></i>
+                        </a>
+                        <button
+                            onClick={() => { navigator.clipboard.writeText(url); }}
+                            style={{ width: 44, height: 44, borderRadius: '50%', background: 'white', color: '#1e293b', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.2)', fontSize: 14 }}
+                            title="Copy URL">
+                            <i className="fas fa-link"></i>
+                        </button>
+                    </div>
+                </div>
+                <div style={{ padding: '10px 12px', background: '#f8fafc', borderTop: '1px solid #f1f5f9' }}>
+                    <p style={{ fontSize: 11, color: '#94a3b8', fontStyle: 'italic', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>"{prompt}"</p>
+                </div>
+            </div>
+        );
+
+        /* ── Stop-motion video player ── */
+        const VideoPlayer = ({ urls, prompt }) => {
+            const [playing, setPlaying] = useState(true);
+            const [frame, setFrame] = useState(0);
+            const [fps, setFps] = useState(4);
+            const timer = useRef(null);
 
             useEffect(() => {
-                scrollToBottom();
-            }, [messages]);
-
-            const handleSend = async (e) => {
-                e.preventDefault();
-                if (!input.trim() || loading) return;
-                
-                const userMsg = input.trim();
-                const newMsgs = [...messages, { role: 'user', content: userMsg }];
-                setMessages(newMsgs);
-                setInput('');
-                setLoading(true);
-
-                // Add empty assistant message placeholder for streaming
-                setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
-                
-                try {
-                    // Send to free open API (no popups, no api keys needed)
-                    const response = await fetch('https://text.pollinations.ai/openai', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            messages: [
-                                { role: 'system', content: 'You are Aura AI, a highly advanced assistant mimicking the capabilities of Google Gemini.' },
-                                ...newMsgs.map(m => ({ role: m.role, content: m.content }))
-                            ],
-                            stream: true
-                        })
-                    });
-
-                    if (!response.ok) throw new Error("Network response was not ok");
-                    
-                    const reader = response.body.getReader();
-                    const decoder = new TextDecoder('utf-8');
-                    let fullResponse = '';
-
-                    while (true) {
-                        const { done, value } = await reader.read();
-                        if (done) break;
-                        const chunk = decoder.decode(value, { stream: true });
-                        const lines = chunk.split('\n');
-                        for (const line of lines) {
-                            if (line.startsWith('data: ') && line.trim() !== 'data: [DONE]') {
-                                try {
-                                    const data = JSON.parse(line.slice(6));
-                                    if (data.choices && data.choices[0].delta && data.choices[0].delta.content) {
-                                        fullResponse += data.choices[0].delta.content;
-                                        setMessages(prev => {
-                                            const updated = [...prev];
-                                            updated[updated.length - 1].content = fullResponse;
-                                            return updated;
-                                        });
-                                    }
-                                } catch (e) {
-                                    // ignore parse errors for partial chunks
-                                }
-                            }
-                        }
-                    }
-                } catch (err) {
-                    console.error("API Error:", err);
-                    setMessages(prev => {
-                        const updated = [...prev];
-                        updated[updated.length - 1].content = `**Error connecting to AI:** ${err.message}`;
-                        return updated;
-                    });
-                } finally {
-                    setLoading(false);
+                if (playing) {
+                    timer.current = setInterval(() => setFrame(f => (f + 1) % urls.length), 1000 / fps);
+                } else {
+                    clearInterval(timer.current);
                 }
-            };
+                return () => clearInterval(timer.current);
+            }, [playing, fps, urls.length]);
 
             return (
-                <div className="flex flex-col h-full w-full max-w-4xl mx-auto relative">
-                    {/* Header */}
-                    <div className="py-6 px-4 sm:px-8 flex items-center justify-between z-10 shrink-0">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-2xl bg-slate-800/80 border border-slate-700/50 flex items-center justify-center shadow-[0_0_20px_rgba(59,130,246,0.2)] overflow-hidden">
-                                <img src="logo.png" alt="Aura AI" className="w-full h-full object-cover" />
-                            </div>
-                            <div>
-                                <h1 className="font-bold text-2xl tracking-tight text-white">Aura AI</h1>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                    <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
-                                    <span className="text-xs text-emerald-400 font-medium">Free API Active</span>
-                                </div>
-                            </div>
+                <div style={{ borderRadius: 16, overflow: 'hidden', background: '#0f172a', border: '1px solid #1e293b', width: '100%', maxWidth: 480 }}>
+                    {/* Screen */}
+                    <div style={{ position: 'relative' }}>
+                        <img src={urls[frame]} alt={`frame ${frame + 1}`} className="video-frame" />
+                        <div style={{
+                            position: 'absolute', top: 10, left: 10,
+                            background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)',
+                            color: 'white', fontSize: 10, fontFamily: 'monospace',
+                            padding: '3px 10px', borderRadius: 99, display: 'flex', alignItems: 'center', gap: 6,
+                            border: '1px solid rgba(255,255,255,0.1)'
+                        }}>
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#6366f1', display: 'inline-block', animation: 'bounce 1s infinite' }}></span>
+                            AI Loop · Frame {frame + 1}/{urls.length}
                         </div>
+                        {/* Centre play/pause */}
+                        <button
+                            onClick={() => setPlaying(p => !p)}
+                            style={{
+                                position: 'absolute', inset: 0, margin: 'auto',
+                                width: 44, height: 44, borderRadius: '50%',
+                                background: 'rgba(0,0,0,0.5)', border: 'none', cursor: 'pointer',
+                                color: 'white', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                opacity: 0, transition: 'opacity 0.15s',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                            onMouseLeave={e => e.currentTarget.style.opacity = 0}
+                        >
+                            <i className={`fas ${playing ? 'fa-pause' : 'fa-play'}`}></i>
+                        </button>
                     </div>
 
-                    {/* Chat Area */}
-                    <div className="flex-1 overflow-y-auto px-4 sm:px-8 pb-32 scroll-smooth">
-                        <div className="space-y-8 mt-4">
-                            {messages.map((m, i) => (
-                                <div key={i} className={`flex gap-4 ${m.role === 'user' ? 'flex-row-reverse' : ''} animate-[fadeIn_0.3s_ease-out]`}>
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-md overflow-hidden ${m.role === 'user' ? 'bg-blue-600 text-white' : 'bg-slate-800 border border-slate-700 text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.15)]'}`}>
-                                        {m.role === 'user' ? <i className="fas fa-user text-sm"></i> : <img src="logo.png" alt="Aura" className="w-full h-full object-cover" />}
-                                    </div>
-                                    <div className={`max-w-[85%] ${m.role === 'user' ? 'bg-blue-600 text-white px-5 py-3 rounded-2xl rounded-tr-sm shadow-sm' : 'text-gray-200 mt-1.5'}`}>
-                                        {m.role === 'user' ? (
-                                            <div className="whitespace-pre-wrap leading-relaxed">{m.content}</div>
-                                        ) : (
-                                            <div className="prose prose-invert max-w-none text-[15px] leading-relaxed" dangerouslySetInnerHTML={{ __html: window.marked ? marked.parse(m.content) : m.content }} />
-                                        )}
-                                        {m.role === 'assistant' && !m.content && loading && (
-                                            <div className="flex items-center gap-1.5 h-6">
-                                                <span className="w-2 h-2 rounded-full bg-blue-500 animate-bounce"></span>
-                                                <span className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{animationDelay: '0.2s'}}></span>
-                                                <span className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{animationDelay: '0.4s'}}></span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                            <div ref={messagesEndRef} className="h-4" />
+                    {/* Progress bar */}
+                    <div style={{ background: '#1e293b', padding: '4px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ flex: 1, height: 3, background: '#334155', borderRadius: 99, overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${((frame + 1) / urls.length) * 100}%`, background: '#6366f1', borderRadius: 99, transition: 'width 0.1s' }}></div>
                         </div>
+                        <span style={{ fontSize: 9, color: '#64748b', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{frame + 1}/{urls.length}</span>
                     </div>
 
-                    {/* Input Taskbar (Floating Pill) */}
-                    <div className="absolute bottom-8 left-0 right-0 px-4 sm:px-8 flex justify-center pointer-events-none">
-                        <div className="w-full max-w-3xl glass-pill rounded-[2rem] p-2 pointer-events-auto transition-all duration-300 hover:shadow-[0_15px_50px_-10px_rgba(59,130,246,0.3)]">
-                            <form onSubmit={handleSend} className="relative flex items-center bg-slate-900/60 rounded-full border border-slate-700/50 pr-2 transition-colors focus-within:bg-slate-900/80 focus-within:border-blue-500/50">
-                                <button type="button" className="w-14 h-14 flex items-center justify-center text-slate-400 hover:text-white transition rounded-full shrink-0 group" title="Attachments (Coming soon)">
-                                    <i className="fas fa-plus-circle text-xl group-hover:scale-110 transition-transform"></i>
-                                </button>
-                                <input 
-                                    type="text" 
-                                    value={input} 
-                                    onChange={e => setInput(e.target.value)} 
-                                    placeholder="Message Aura AI..." 
-                                    className="flex-1 py-4 bg-transparent outline-none text-white placeholder-slate-500 text-lg"
-                                    disabled={loading}
-                                    autoFocus
-                                />
-                                <button 
-                                    type="submit" 
-                                    disabled={loading || !input.trim()} 
-                                    className={`w-11 h-11 rounded-full flex items-center justify-center transition shrink-0 ml-2 ${loading || !input.trim() ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-white text-black hover:scale-105 active:scale-95 shadow-lg'}`}
-                                >
-                                    <i className="fas fa-arrow-up"></i>
-                                </button>
-                            </form>
+                    {/* Controls */}
+                    <div style={{ background: '#0f172a', padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <button onClick={() => setPlaying(p => !p)} style={{ width: 28, height: 28, borderRadius: 6, background: '#1e293b', border: 'none', color: 'white', cursor: 'pointer', fontSize: 10 }}>
+                            <i className={`fas ${playing ? 'fa-pause' : 'fa-play'}`}></i>
+                        </button>
+                        <button onClick={() => setFrame(f => (f - 1 + urls.length) % urls.length)} style={{ width: 28, height: 28, borderRadius: 6, background: '#1e293b', border: 'none', color: 'white', cursor: 'pointer', fontSize: 10 }}>
+                            <i className="fas fa-step-backward"></i>
+                        </button>
+                        <button onClick={() => setFrame(f => (f + 1) % urls.length)} style={{ width: 28, height: 28, borderRadius: 6, background: '#1e293b', border: 'none', color: 'white', cursor: 'pointer', fontSize: 10 }}>
+                            <i className="fas fa-step-forward"></i>
+                        </button>
+
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1, justifyContent: 'center' }}>
+                            <span style={{ fontSize: 9, color: '#64748b', fontFamily: 'monospace' }}>Speed</span>
+                            <input type="range" min={2} max={10} value={fps} onChange={e => setFps(+e.target.value)}
+                                style={{ width: 70, accentColor: '#6366f1' }} />
+                            <span style={{ fontSize: 9, color: '#94a3b8', fontFamily: 'monospace', width: 24 }}>{fps}fps</span>
                         </div>
+
+                        <a href={urls[frame]} download={`frame-${frame + 1}.jpg`}
+                            style={{ padding: '4px 10px', borderRadius: 6, background: '#4f46e5', color: 'white', fontSize: 10, fontWeight: 600, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <i className="fas fa-download"></i> Save
+                        </a>
                     </div>
                 </div>
             );
         };
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+        /* ── Generation progress loader ── */
+        const Loader = ({ progress, text, type }) => (
+            <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: 16, padding: '16px 18px', maxWidth: 360, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                    <div style={{ width: 38, height: 38, borderRadius: 10, background: '#ede9fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed', flexShrink: 0 }}>
+                        <i className={`fas ${type === 'video' ? 'fa-film' : 'fa-image'}`} style={{ fontSize: 14 }}></i>
+                    </div>
+                    <div>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: '#0f172a', fontFamily: 'Outfit,sans-serif' }}>
+                            {type === 'video' ? 'Generating Video Loop' : 'Synthesizing Image'}
+                        </div>
+                        <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 2 }}>{text || 'Starting pipeline...'}</div>
+                    </div>
+                </div>
+                <div style={{ background: '#f1f5f9', borderRadius: 99, height: 6, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${progress}%`, background: 'linear-gradient(90deg,#6366f1,#7c3aed)', borderRadius: 99, transition: 'width 0.4s ease' }}></div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5, fontSize: 9, color: '#94a3b8', fontFamily: 'monospace' }}>
+                    <span>Aura Render Pipeline</span>
+                    <span>{progress}%</span>
+                </div>
+            </div>
+        );
+
+        /* ── Authentication Portal (Gmail only) ── */
+        const AuthPortal = ({ onLogin, logoComponent }) => {
+            const [email, setEmail] = useState('');
+            const [otp, setOtp] = useState('');
+            const [step, setStep] = useState('email'); // 'email' or 'otp'
+            const [error, setError] = useState('');
+            const [loading, setLoading] = useState(false);
+            const [generatedOtp, setGeneratedOtp] = useState('');
+            const [generatedAuraId, setGeneratedAuraId] = useState('');
+            const [simulatedMailToast, setSimulatedMailToast] = useState(null);
+
+            const handleSendOtp = (e) => {
+                e.preventDefault();
+                setError('');
+                const trimmedEmail = email.trim().toLowerCase();
+                if (!trimmedEmail) {
+                    setError('Email is required.');
+                    return;
+                }
+                if (!trimmedEmail.endsWith('@gmail.com')) {
+                    setError('Currently, only Gmail addresses (@gmail.com) are supported.');
+                    return;
+                }
+
+                setLoading(true);
+
+                // Generate verification details
+                const cleanOtp = Math.floor(100000 + Math.random() * 900000).toString();
+                // Generate unique Aura ID
+                const randHex = () => Math.floor(0x1000 + Math.random() * 0xf000).toString(16).toUpperCase();
+                const auraId = `AURA-${randHex()}-${randHex()}`;
+
+                setTimeout(() => {
+                    setGeneratedOtp(cleanOtp);
+                    setGeneratedAuraId(auraId);
+                    setStep('otp');
+                    setLoading(false);
+
+                    // Show simulated mail notification
+                    setSimulatedMailToast({
+                        to: trimmedEmail,
+                        otp: cleanOtp,
+                        auraId: auraId
+                    });
+                }, 1200);
+            };
+
+            const handleVerifyOtp = (e) => {
+                e.preventDefault();
+                setError('');
+                if (otp.trim() !== generatedOtp) {
+                    setError('Invalid verification code. Please try again.');
+                    return;
+                }
+
+                setLoading(true);
+                setTimeout(() => {
+                    const newAccount = { email: email.trim().toLowerCase(), auraId: generatedAuraId, verifiedAt: new Date().toISOString() };
+                    localStorage.setItem('aura_account', JSON.stringify(newAccount));
+                    onLogin(newAccount);
+                    setLoading(false);
+                }, 1000);
+            };
+
+            return (
+                <div style={{
+                    height: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, rgba(124, 58, 237, 0.08) 90.2%), #090d16',
+                    fontFamily: "'Inter', sans-serif", overflow: 'hidden', position: 'relative'
+                }}>
+                    <div style={{ position: 'absolute', top: '-10%', left: '-10%', width: '40vw', height: '40vw', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.15)', filter: 'blur(120px)' }}></div>
+                    <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '45vw', height: '45vw', borderRadius: '50%', background: 'rgba(124, 58, 237, 0.12)', filter: 'blur(140px)' }}></div>
+
+                    {simulatedMailToast && (
+                        <div className="fade-in" style={{
+                            position: 'fixed', top: 20, right: 20, zIndex: 100,
+                            maxWidth: 380, width: 'calc(100% - 40px)', background: 'rgba(30, 41, 59, 0.95)',
+                            border: '1.5px solid rgba(99, 102, 241, 0.3)', borderRadius: 16,
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)',
+                            padding: 16, color: '#f8fafc'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 8, marginBottom: 8 }}>
+                                <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                                    <i className="fas fa-envelope" style={{ fontSize: 12 }}></i>
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <h4 style={{ fontSize: 11, fontWeight: 700, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Simulated Gmail Server</h4>
+                                    <p style={{ fontSize: 9, color: '#94a3b8' }}>Sent to: {simulatedMailToast.to}</p>
+                                </div>
+                                <button onClick={() => setSimulatedMailToast(null)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 14 }}>
+                                    <i className="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div style={{ fontSize: 12, lineHeight: 1.5, color: '#cbd5e1' }}>
+                                <p style={{ marginBottom: 6 }}>Your Aura Verification OTP is: <strong style={{ color: '#818cf8', fontFamily: 'monospace', fontSize: 15 }}>{simulatedMailToast.otp}</strong></p>
+                                <p>Your unique Account ID: <code style={{ background: 'rgba(99, 102, 241, 0.2)', padding: '2px 6px', borderRadius: 4, fontSize: 10, color: '#a5b4fc', fontFamily: 'monospace' }}>{simulatedMailToast.auraId}</code></p>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="scale-up" style={{
+                        width: '100%', maxWidth: 440, padding: '40px 32px',
+                        background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(16px)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 24,
+                        boxShadow: '0 30px 60px rgba(0, 0, 0, 0.4)',
+                        color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 10
+                    }}>
+                        <div style={{ marginBottom: 20, filter: 'drop-shadow(0 4px 12px rgba(99,102,241,0.3))' }}>
+                            {logoComponent}
+                        </div>
+
+                        <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 28, fontWeight: 800, background: 'linear-gradient(135deg, #a5b4fc, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: 8 }}>
+                            Create Aura Account
+                        </h2>
+                        <p style={{ fontSize: 13, color: '#94a3b8', textAlign: 'center', lineHeight: 1.6, marginBottom: 28, maxWidth: 320 }}>
+                            Create or access your personal Aura profile. Only Google Mail (@gmail.com) accounts are supported currently.
+                        </p>
+
+                        {error && (
+                            <div style={{
+                                width: '100%', padding: '10px 14px', background: 'rgba(239, 68, 68, 0.15)',
+                                border: '1.5px solid rgba(239, 68, 68, 0.3)', borderRadius: 12,
+                                color: '#fca5a5', fontSize: 12, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16
+                            }}>
+                                <i className="fas fa-exclamation-circle" style={{ flexShrink: 0 }}></i>
+                                <span>{error}</span>
+                            </div>
+                        )}
+
+                        {step === 'email' ? (
+                            <form onSubmit={handleSendOtp} style={{ width: '100%' }}>
+                                <div style={{ marginBottom: 20 }}>
+                                    <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6, fontFamily: 'monospace' }}>Gmail Address</label>
+                                    <div style={{ position: 'relative' }}>
+                                        <span style={{ position: 'absolute', left: 14, top: 12, color: '#64748b' }}>
+                                            <i className="far fa-envelope"></i>
+                                        </span>
+                                        <input
+                                            type="email"
+                                            placeholder="yourname@gmail.com"
+                                            value={email}
+                                            onChange={e => setEmail(e.target.value)}
+                                            disabled={loading}
+                                            required
+                                            style={{
+                                                width: '100%', padding: '10px 14px 10px 38px',
+                                                background: 'rgba(15, 23, 42, 0.5)', border: '1.5px solid rgba(255, 255, 255, 0.15)',
+                                                borderRadius: 12, outline: 'none', fontSize: 13, color: 'white', transition: 'border-color 0.2s'
+                                            }}
+                                            onFocus={e => e.target.style.borderColor = '#6366f1'}
+                                            onBlur={e => e.target.style.borderColor = 'rgba(255, 255, 255, 0.15)'}
+                                        />
+                                    </div>
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    style={{
+                                        width: '100%', padding: '12px 18px', border: 'none', borderRadius: 12,
+                                        background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', color: 'white',
+                                        fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                                        boxShadow: '0 10px 20px rgba(79, 70, 229, 0.3)', transition: 'transform 0.2s'
+                                    }}
+                                >
+                                    {loading ? (
+                                        <>
+                                            <i className="fas fa-spinner fa-spin"></i> Generating Aura ID...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Get Verification ID <i className="fas fa-arrow-right"></i>
+                                        </>
+                                    )}
+                                </button>
+                            </form>
+                        ) : (
+                            <form onSubmit={handleVerifyOtp} style={{ width: '100%' }}>
+                                <div style={{ marginBottom: 20 }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                                        <label style={{ fontSize: 10, fontWeight: 700, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: 'monospace' }}>Verification Code</label>
+                                        <button type="button" onClick={() => setStep('email')} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 10, cursor: 'pointer', textDecoration: 'underline' }}>Change Email</button>
+                                    </div>
+                                    <div style={{ position: 'relative' }}>
+                                        <span style={{ position: 'absolute', left: 14, top: 12, color: '#64748b' }}>
+                                            <i className="fas fa-key"></i>
+                                        </span>
+                                        <input
+                                            type="text"
+                                            placeholder="Enter 6-digit OTP"
+                                            maxLength={6}
+                                            value={otp}
+                                            onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
+                                            disabled={loading}
+                                            required
+                                            style={{
+                                                width: '100%', padding: '10px 14px 10px 38px',
+                                                background: 'rgba(15, 23, 42, 0.5)', border: '1.5px solid rgba(255, 255, 255, 0.15)',
+                                                borderRadius: 12, outline: 'none', fontSize: 14, color: 'white', letterSpacing: '0.2em', textAlign: 'center', transition: 'border-color 0.2s'
+                                            }}
+                                            onFocus={e => e.target.style.borderColor = '#6366f1'}
+                                            onBlur={e => e.target.style.borderColor = 'rgba(255, 255, 255, 0.15)'}
+                                        />
+                                    </div>
+                                    <p style={{ fontSize: 10, color: '#64748b', marginTop: 6, textAlign: 'center' }}>Check the simulated mailer notification at the top right.</p>
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={loading || otp.length < 6}
+                                    style={{
+                                        width: '100%', padding: '12px 18px', border: 'none', borderRadius: 12,
+                                        background: (loading || otp.length < 6) ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                                        color: (loading || otp.length < 6) ? '#64748b' : 'white',
+                                        fontSize: 14, fontWeight: 600, cursor: (loading || otp.length < 6) ? 'not-allowed' : 'pointer',
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                                        boxShadow: (loading || otp.length < 6) ? 'none' : '0 10px 20px rgba(79, 70, 229, 0.3)'
+                                    }}
+                                >
+                                    {loading ? (
+                                        <>
+                                            <i className="fas fa-spinner fa-spin"></i> Unlocking Workspace...
+                                        </>
+                                    ) : (
+                                        <>
+                                            Unlock Aura AI <i className="fas fa-lock-open"></i>
+                                        </>
+                                    )}
+                                </button>
+                            </form>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+
+
+        /* ══════════════════════════════════════════
+            MAIN APP COMPONENT
+        ══════════════════════════════════════════ */
+        const App = () => {
+            /* ── Persistent state ── */
+            const ls = k => localStorage.getItem(k);
+            const [account, setAccount] = useState(() => { try { return JSON.parse(ls('aura_account') || 'null'); } catch { return null; } });
+            const [chats, setChats] = useState(() => { try { return JSON.parse(ls('aura_chats') || '[]'); } catch { return []; } });
+            const [chatId, setChatId] = useState(() => ls('aura_chat_id') || '');
+            const [apiKey, setApiKey] = useState(() => ls('aura_key') || DEFAULT_KEY);
+            const [model, setModel] = useState(() => ls('aura_model') || DEFAULT_MODEL);
+            const [customMdl, setCustomMdl] = useState(() => ls('aura_custom_model') || '');
+            const [sysPrmpt, setSysPrmpt] = useState(() => ls('aura_sys') || DEFAULT_SYS);
+
+            /* ── UI state ── */
+            const [mode, setMode] = useState('chat');
+            const [input, setInput] = useState('');
+            const [loading, setLoading] = useState(false);
+            const [sidebar, setSidebar] = useState(true);
+            const [settings, setSettings] = useState(false);
+            const [listening, setListening] = useState(false);
+            const [voiceOut, setVoiceOut] = useState(false);
+            const [profileDropdown, setProfileDropdown] = useState(false);
+
+
+            /* ── Settings modal temps ── */
+            const [tKey, setTKey] = useState(apiKey);
+            const [tMdl, setTMdl] = useState(model);
+            const [tCMdl, setTCMl] = useState(customMdl);
+            const [tSys, setTSys] = useState(sysPrmpt);
+
+            const endRef = useRef(null);
+            const recRef = useRef(null);
+
+            /* ── LocalStorage sync ── */
+            useEffect(() => { localStorage.setItem('aura_chats', JSON.stringify(chats)); }, [chats]);
+            useEffect(() => { localStorage.setItem('aura_chat_id', chatId); }, [chatId]);
+            useEffect(() => { localStorage.setItem('aura_key', apiKey); }, [apiKey]);
+            useEffect(() => { localStorage.setItem('aura_model', model); }, [model]);
+            useEffect(() => { localStorage.setItem('aura_custom_model', customMdl); }, [customMdl]);
+            useEffect(() => { localStorage.setItem('aura_sys', sysPrmpt); }, [sysPrmpt]);
+
+            const activeChat = chats.find(c => c.id === chatId);
+            const msgs = activeChat?.messages || [];
+
+            useEffect(() => {
+                endRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, [msgs.length, msgs[msgs.length - 1]?.progress]);
+
+            /* ── Cleanup TTS on unmount ── */
+            useEffect(() => {
+                const onVoices = () => { window.speechSynthesis?.getVoices(); };
+                if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = onVoices;
+                return () => { if (window.speechSynthesis) { window.speechSynthesis.onvoiceschanged = null; window.speechSynthesis.cancel(); } };
+            }, []);
+
+            /* ── TTS helper ── */
+            const speak = (text) => {
+                if (!window.speechSynthesis) return;
+                window.speechSynthesis.cancel();
+                const clean = text.replace(/[*#`_\[\]()]/g, '').substring(0, 280);
+                const u = new SpeechSynthesisUtterance(clean);
+                const applyVoiceAndSpeak = () => {
+                    const voices = window.speechSynthesis.getVoices() || [];
+                    if (voices.length === 0) { setTimeout(applyVoiceAndSpeak, 100); return; }
+                    u.voice = voices.find(v => v.lang && v.lang.startsWith('en') && v.name && v.name.includes('Google'))
+                        || voices.find(v => v.lang && v.lang.startsWith('en'))
+                        || voices[0];
+                    window.speechSynthesis.speak(u);
+                };
+                applyVoiceAndSpeak();
+            };
+
+            /* ── STT ── */
+            const toggleMic = () => {
+                if (listening) {
+                    recRef.current?.stop();
+                    setListening(false);
+                    return;
+                }
+                const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SR) { alert('Voice recognition requires Chrome or Edge.'); return; }
+                const rec = new SR();
+                rec.lang = 'en-US';
+                rec.onstart = () => setListening(true);
+                rec.onend = () => setListening(false);
+                rec.onerror = () => setListening(false);
+                rec.onresult = e => {
+                    const t = e.results[0][0].transcript;
+                    setInput(t);
+                    if (mode === 'voice') setTimeout(() => handleSend(null, t), 50);
+                };
+                recRef.current = rec;
+                rec.start();
+            };
+
+            /* ── Patch helper: update last message in chat ── */
+            const patchLast = (id, patch) => {
+                setChats(prev => prev.map(c => {
+                    if (c.id !== id) return c;
+                    const ms = [...c.messages];
+                    ms[ms.length - 1] = { ...ms[ms.length - 1], ...patch };
+                    return { ...c, messages: ms };
+                }));
+            };
+
+            /* ── Image generation ── */
+            const genImage = async (prompt, id) => {
+                const seed = Math.random() * 1e6 | 0;
+                const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
+                patchLast(id, { progress: 15, progressText: 'Initialising render engine...' });
+                try {
+                    await new Promise((res, rej) => {
+                        const img = new Image();
+                        img.onload = res; img.onerror = rej;
+                        setTimeout(() => patchLast(id, { progress: 60, progressText: 'Rendering pixels...' }), 800);
+                        img.src = url;
+                    });
+                    setChats(prev => prev.map(c => {
+                        if (c.id !== id) return c;
+                        const ms = [...c.messages];
+                        ms[ms.length - 1] = { role: 'assistant', type: 'image', content: url, prompt };
+                        return { ...c, messages: ms };
+                    }));
+                } catch {
+                    patchLast(id, { role: 'assistant', type: 'text', content: '❌ **Image generation failed.** Check your internet connection and try again.' });
+                } finally { setLoading(false); }
+            };
+
+            /* ── Video generation ── */
+            const genVideo = async (prompt, id) => {
+                const base = Math.random() * 1e6 | 0;
+                const urls = [0, 137, 274, 411].map(d => `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=768&height=432&nologo=true&seed=${base + d}`);
+                const steps = [
+                    { p: 15, t: 'Deconstructing motion prompt...' },
+                    { p: 40, t: 'Synthesising frame seeds...' },
+                    { p: 65, t: 'Rendering depth matrices...' },
+                    { p: 85, t: 'Compiling motion loop...' },
+                ];
+                let si = 0;
+                const iv = setInterval(() => {
+                    if (si < steps.length) {
+                        patchLast(id, { progress: steps[si].p, progressText: steps[si].t });
+                        si++;
+                    }
+                }, 900);
+                try {
+                           if (window.speechSynthesis) window.speechSynthesis.cancel();
+         await Promise.all(urls.map(u => new Promise((res, rej) => {
+                        const img = new Image(); img.onload = res; img.onerror = rej; img.src = u;
+                    })));
+                    clearInterval(iv);
+                    setChats(prev => prev.map(c => {
+                        if (c.id !== id) return c;
+                        const ms = [...c.messages];
+                        ms[ms.length - 1] = { role: 'assistant', type: 'video', content: urls, prompt };
+                        return { ...c, messages: ms };
+                    }));
+                } catch {
+                    clearInterval(iv);
+                    patchLast(id, { role: 'assistant', type: 'text', content: '❌ **Video generation failed.** Try a different prompt or check your connection.' });
+                } finally { setLoading(false); }
+            };
+
+            /* ── Master send ── */
+            const handleSend = async (e, forced = '') => {
+                if (e) e.preventDefault();
+                const raw = (forced || input).trim();
+                if (!raw || loading) return;
+
+                /* Slash command routing */
+                let activeMode = mode, prompt = raw;
+                if (raw.startsWith('/image ')) { activeMode = 'image'; prompt = raw.slice(7).trim(); }
+                else if (raw.startsWith('/video ')) { activeMode = 'video'; prompt = raw.slice(7).trim(); }
+
+                const userMsg = { role: 'user', content: raw };
+
+                /* Init or select chat */
+                let id = chatId;
+                let copy = [...chats];
+                let cur = copy.find(c => c.id === id);
+
+                if (!cur) {
+                    id = Date.now().toString();
+                    cur = { id, title: prompt.slice(0, 32) + (prompt.length > 32 ? '…' : ''), messages: [userMsg], model: model === 'custom' ? customMdl : model, date: new Date().toLocaleDateString('en', { month: 'short', day: 'numeric' }) };
+                    copy = [cur, ...copy];
+                    setChats(copy); setChatId(id);
+                } else {
+                    cur.messages = [...cur.messages, userMsg];
+                    copy = [cur, ...copy.filter(c => c.id !== id)];
+                    setChats(copy);
+                }
+
+                setInput(''); setLoading(true);
+                if (window.speechSynthesis) window.speechSynthesis.cancel();
+
+                /* Route mode */
+                if (activeMode === 'image') {
+                    cur.messages = [...cur.messages, { role: 'assistant', type: 'image_loader', progress: 5, progressText: 'Starting...', prompt }];
+                    setChats([...copy]);
+                    genImage(prompt, id);
+                    return;
+                }
+                if (activeMode === 'video') {
+                    cur.messages = [...cur.messages, { role: 'assistant', type: 'video_loader', progress: 5, progressText: 'Starting...', prompt }];
+                    setChats([...copy]);
+                    genVideo(prompt, id);
+                    return;
+                }
+
+                /* Text chat via OpenRouter */
+                cur.messages = [...cur.messages, { role: 'assistant', content: '' }];
+                setChats([...copy]);
+
+                try {
+                    const key = (apiKey || DEFAULT_KEY).trim();
+                    const mdl = model === 'custom' ? customMdl.trim() : model;
+                    const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${key}`,
+                            'HTTP-Referer': 'https://nakshapatel2012.github.io/aura-ai/',
+                            'X-Title': 'Aura AI',
+                        },
+                        body: JSON.stringify({
+                            model: mdl,
+                            messages: [
+                                { role: 'system', content: sysPrmpt },
+                                ...cur.messages.slice(0, -1).map(m => ({ role: m.role, content: m.content }))
+                            ],
+                            max_tokens: 4096,
+                            stream: true,
+                        })
+                    });
+
+                    if (!resp.ok) {
+                        const err = await resp.text();
+                        throw new Error(`OpenRouter ${resp.status}: ${err}`);
+                    }
+
+                    const reader = resp.body.getReader();
+                    const dec = new TextDecoder();
+                    let full = '', buf = '';
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) { if (activeMode === 'voice' || voiceOut) speak(full); break; }
+                        buf += dec.decode(value, { stream: true });
+                        let nl = buf.indexOf('\n');
+                        while (nl !== -1) {
+                            const line = buf.slice(0, nl).trim();
+                            buf = buf.slice(nl + 1);
+                            nl = buf.indexOf('\n');
+                            if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+                                try {
+                                    const delta = JSON.parse(line.slice(6))?.choices?.[0]?.delta?.content || '';
+                                    if (delta) {
+                                        full += delta;
+                                        setChats(prev => prev.map(c => {
+                                            if (c.id !== id) return c;
+                                            const ms = [...c.messages];
+                                            ms[ms.length - 1] = { role: 'assistant', content: full };
+                                            return { ...c, messages: ms };
+                                        }));
+                                    }
+                                } catch { }
+                            }
+                        }
+                    }
+                } catch (err) {
+                    setChats(prev => prev.map(c => {
+                        if (c.id !== id) return c;
+                        const ms = [...c.messages];
+                        ms[ms.length - 1] = { role: 'assistant', content: `❌ **Connection error:**\n${err.message}\n\nPlease check your API key in Settings.` };
+                        return { ...c, messages: ms };
+                    }));
+                } finally { setLoading(false); }
+            };
+
+            const renderMd = txt => {
+                if (!txt || !window.marked) return txt || '';
+                marked.setOptions({ breaks: true, gfm: true });
+                return marked.parse(txt);
+            };
+
+            const openSettings = () => { setTKey(apiKey); setTMdl(model); setTCMdl(customMdl); setTSys(sysPrmpt); setSettings(true); };
+            const saveSettings = e => { e.preventDefault(); setApiKey(tKey); setModel(tMdl); setCustomMdl(tCMdl); setSysPrmpt(tSys); setSettings(false); };
+
+            const newChat = () => { setChatId(''); setInput(''); };
+            const delChat = (id, e) => { e.stopPropagation(); setChats(p => p.filter(c => c.id !== id)); if (chatId === id) setChatId(''); };
+            const clearAll = () => { if (confirm('Delete all chats?')) { setChats([]); setChatId(''); } };
+            const copyText = (txt, e) => {
+                navigator.clipboard.writeText(txt);
+                const i = e.currentTarget.querySelector('i');
+                const cls = i.className; i.className = 'fas fa-check'; i.style.color = '#22c55e';
+                setTimeout(() => { i.className = cls; i.style.color = ''; }, 1500);
+            };
+
+            /* ── Mode label/placeholder config ── */
+            const modeConfig = {
+                chat: { ph: 'Message Aura AI…', head: 'How can I help you today?', sub: 'Ask questions, write text, debug code, or explore ideas.' },
+                voice: { ph: 'Or type a message (voice mode)…', head: 'Hello, I am listening…', sub: 'Speak your prompt clearly. Aura will respond aloud in voice mode.' },
+                image: { ph: 'Describe the image to generate…', head: 'Create stunning visuals', sub: 'Describe any scene, art, or design. Aura will synthesise it instantly.' },
+                video: { ph: 'Describe the animation to generate…', head: 'Create stunning videos', sub: 'Describe motion or scenes. Aura will synthesise a video loop instantly.' },
+            };
+
+            /* ═══════════════ RENDER ═══════════════ */
+            if (!account) {
+                return <AuthPortal onLogin={setAccount} logoComponent={<Logo size={80} />} />;
+            }
+
+            return (
+                <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#f8fafc' }}>
+
+                    {/* ── TOP HEADER (Includes curvy tabs & actions) ── */}
+                    <header style={{
+                        background: '#ffffff',
+                        borderBottom: '1px solid #e2e8f0',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        flexShrink: 0,
+                        zIndex: 20,
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+                    }}>
+                        {/* Top Row: Brand Info + Actions */}
+                        <div style={{
+                            height: 56,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '0 20px',
+                            borderBottom: '1px solid #f1f5f9'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <Logo size={32} />
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 18, color: '#0f172a', letterSpacing: '-0.02em' }}>Aura AI</span>
+                                <span style={{ fontSize: 9, background: '#ede9fe', color: '#7c3aed', fontWeight: 700, padding: '2px 8px', borderRadius: 99, fontFamily: 'monospace' }}>V2.0</span>
+                            </div>
+
+                            {/* Top Right Actions: Feedback + Settings + Account Profile */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative' }}>
+                                {/* Feedback mail link */}
+                                <a href="mailto:auraai.naksh@gmail.com?subject=Aura%20AI%20Feedback&body=Hi%20Aura%20AI%20Team,%0D%0A%0D%0AMy%20Feedback:%0D%0A"
+                                    style={{
+                                        display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none',
+                                        padding: '6px 12px', borderRadius: 8, background: '#f0fdf4', color: '#16a34a',
+                                        fontSize: 12, fontWeight: 600, border: '1px solid #bbf7d0', transition: 'all 0.2s'
+                                    }}>
+                                    <i className="far fa-envelope"></i> Feedback
+                                </a>
+
+                                {/* Settings button */}
+                                <button onClick={openSettings}
+                                    style={{
+                                        width: 34, height: 34, borderRadius: 8, background: '#f8fafc',
+                                        border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        color: '#64748b', cursor: 'pointer', transition: 'all 0.2s'
+                                    }}
+                                    title="Settings">
+                                    <i className="fas fa-cog"></i>
+                                </button>
+
+                                {/* Profile Dropdown Trigger */}
+                                <button onClick={() => setProfileDropdown(p => !p)}
+                                    style={{
+                                        height: 34, padding: '0 10px', borderRadius: 8, background: '#f1f5f9',
+                                        border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 8,
+                                        cursor: 'pointer', transition: 'all 0.2s'
+                                    }}>
+                                    <div style={{
+                                        width: 22, height: 22, borderRadius: '50%', background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+                                        color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        fontSize: 10, fontWeight: 700, textTransform: 'uppercase'
+                                    }}>
+                                        {account?.email?.charAt(0) || 'U'}
+                                    </div>
+                                    <span style={{ fontSize: 11, fontWeight: 600, color: '#475569', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {account?.email?.split('@')[0]}
+                                    </span>
+                                    <i className={`fas fa-chevron-down`} style={{ fontSize: 9, color: '#94a3b8', transform: profileDropdown ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
+                                </button>
+
+                                {/* Profile Floating Menu Dropdown */}
+                                {profileDropdown && (
+                                    <>
+                                        <div style={{ position: 'fixed', inset: 0, zIndex: 30 }} onClick={() => setProfileDropdown(false)} />
+                                        <div className="scale-up" style={{
+                                            position: 'absolute', top: 44, right: 0, zIndex: 40,
+                                            width: 240, background: 'white', border: '1px solid #e2e8f0',
+                                            borderRadius: 12, boxShadow: '0 10px 25px rgba(0,0,0,0.15)', padding: 14
+                                        }}>
+                                            <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: 10, marginBottom: 10 }}>
+                                                <div style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Aura Profile</div>
+                                                <div style={{ fontSize: 12, fontWeight: 600, color: '#0f172a', wordBreak: 'break-all', marginTop: 4 }}>{account?.email}</div>
+                                                <div style={{ fontSize: 9, color: '#64748b', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
+                                                    <span style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '1px 4px', borderRadius: 3 }}>ID: {account?.auraId}</span>
+                                                </div>
+                                            </div>
+
+                                            <button onClick={() => {
+                                                if (confirm('Are you sure you want to log out?')) {
+                                                    localStorage.removeItem('aura_account');
+                                                    setAccount(null);
+                                                    setProfileDropdown(false);
+                                                }
+                                            }}
+                                                style={{
+                                                    width: '100%', padding: '8px 10px', borderRadius: 8, background: '#fef2f2',
+                                                    color: '#ef4444', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                                                    display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', transition: 'all 0.15s'
+                                                }}>
+                                                <i className="fas fa-sign-out-alt"></i> Log Out
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Bottom Row: Curvy, boxy conversation tabs list */}
+                        <div style={{
+                            height: 44,
+                            background: '#f8fafc',
+                            borderBottom: '1px solid #e2e8f0',
+                            display: 'flex',
+                            alignItems: 'flex-end',
+                            overflow: 'hidden',
+                            paddingTop: 4
+                        }}>
+                            <div className="tab-container">
+                                {chats.map(chat => (
+                                    <div key={chat.id}
+                                        onClick={() => setChatId(chat.id)}
+                                        className={`curvy-tab ${chat.id === chatId ? 'active' : ''}`}>
+                                        <i className="far fa-comment-alt" style={{ fontSize: 10, color: chat.id === chatId ? '#4f46e5' : '#94a3b8' }}></i>
+                                        <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                                            {chat.title}
+                                        </span>
+                                        <button onClick={(e) => delChat(chat.id, e)} className="curvy-tab-close" title="Delete conversation">
+                                            <i className="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                ))}
+                                {/* Curvy Boxy new tab button */}
+                                <button onClick={newChat} className="new-tab-btn" title="Start a new chat session">
+                                    <i className="fas fa-plus"></i>
+                                </button>
+                            </div>
+
+                            {/* Right side stats/controls in the tab bar */}
+                            {chats.length > 0 && (
+                                <div style={{ paddingRight: 20, paddingBottom: 6 }}>
+                                    <button onClick={clearAll}
+                                        style={{
+                                            background: 'none', border: 'none', cursor: 'pointer',
+                                            color: '#94a3b8', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                                        onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}>
+                                        <i className="far fa-trash-alt"></i> Clear All
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </header>
+
+                    {/* ── MAIN PANEL ── */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', overflow: 'hidden' }}>
+
+                        {/* Messages / Welcome */}
+                        <div style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
+                            {msgs.length === 0 ? (
+                                /* Welcome */
+                                <div style={{ maxWidth: 680, margin: '0 auto', padding: '60px 20px 120px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                    <div style={{ width: 60, height: 60, borderRadius: 16, overflow: 'hidden', marginBottom: 20, boxShadow: '0 4px 20px rgba(79,70,229,0.2)' }}>
+                                        <Logo size={60} />
+                                    </div>
+                                    <h1 style={{ fontSize: 32, fontWeight: 800, background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: 10, fontFamily: 'Outfit,sans-serif' }}>
+                                        How can I help you today?
+                                    </h1>
+                                    <p style={{ fontSize: 13, color: '#94a3b8', maxWidth: 440, lineHeight: 1.6, marginBottom: 32 }}>
+                                        Chat with AI, generate gorgeous images using <code>/image</code>, or create stop-motion video loops with <code>/video</code>.
+                                    </p>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, width: '100%', textAlign: 'left' }}>
+                                        {STARTERS.map((s, i) => (
+                                            <div key={i} onClick={() => handleSend(null, s.prompt)}
+                                                className="fade-in"
+                                                style={{
+                                                    padding: '14px 16px', borderRadius: 14, cursor: 'pointer',
+                                                    background: 'white', border: '1px solid #e2e8f0',
+                                                    boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+                                                    display: 'flex', alignItems: 'flex-start', gap: 12,
+                                                    transition: 'all 0.2s',
+                                                    animationDelay: `${i * 0.06}s`,
+                                                }}
+                                                onMouseEnter={e => { e.currentTarget.style.borderColor = '#a5b4fc'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(79,70,229,0.1)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                                                onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.05)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
+                                                <div style={{ width: 34, height: 34, borderRadius: 9, background: '#ede9fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4f46e5', flexShrink: 0 }}>
+                                                    <i className={`fas ${s.icon}`} style={{ fontSize: 13 }}></i>
+                                                </div>
+                                                <div style={{ minWidth: 0 }}>
+                                                    <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>{s.title}</div>
+                                                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{s.desc}</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                /* Message list */
+                                <div style={{ maxWidth: 760, margin: '0 auto', padding: '24px 20px 100px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+                                    {msgs.map((m, i) => (
+                                        <div key={i} className="msg-group fade-in" style={{ display: 'flex', gap: 14, justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start', animationDelay: `${Math.min(i, 4) * 0.05}s` }}>
+
+                                            {m.role !== 'user' && (
+                                                <div style={{ flexShrink: 0, alignSelf: 'flex-start', marginTop: 4 }}>
+                                                    <Logo size={30} />
+                                                </div>
+                                            )}
+
+                                            <div style={{ maxWidth: '82%', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                                <div className={m.role === 'user' ? 'bubble-user' : 'bubble-ai'} style={{ padding: '12px 16px' }}>
+
+                                                    {/* Standard text bubble */}
+                                                    {(!m.type || m.type === 'text') && m.role === 'user' && (
+                                                        <div style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{m.content}</div>
+                                                    )}
+                                                    {(!m.type || m.type === 'text') && m.role === 'assistant' && (
+                                                        <div className="prose" dangerouslySetInnerHTML={{ __html: renderMd(m.content) }} />
+                                                    )}
+
+                                                    {/* Image card */}
+                                                    {m.type === 'image' && <ImageCard url={m.content} prompt={m.prompt} />}
+
+                                                    {/* Video player */}
+                                                    {m.type === 'video' && <VideoPlayer urls={m.content} prompt={m.prompt} />}
+
+                                                    {/* Loaders */}
+                                                    {(m.type === 'image_loader' || m.type === 'video_loader') && (
+                                                        <Loader progress={m.progress} text={m.progressText} type={m.type === 'video_loader' ? 'video' : 'image'} />
+                                                    )}
+
+                                                    {/* Typing indicator */}
+                                                    {m.role === 'assistant' && !m.type && !m.content && loading && i === msgs.length - 1 && (
+                                                        <div style={{ display: 'flex', gap: 5, padding: '4px 0' }}>
+                                                            <span className="dot"></span>
+                                                            <span className="dot"></span>
+                                                            <span className="dot"></span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Actions under AI bubble */}
+                                                {m.role === 'assistant' && (!m.type || m.type === 'text') && m.content && (
+                                                    <div className="msg-actions" style={{ display: 'flex', gap: 6, paddingLeft: 4 }}>
+                                                        <button onClick={(e) => copyText(m.content, e)} style={{ fontSize: 10, color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, padding: '3px 6px', borderRadius: 6 }}
+                                                            onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#4f46e5'; }}
+                                                            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#94a3b8'; }}>
+                                                            <i className="far fa-copy"></i> Copy
+                                                        </button>
+                                                        <button onClick={() => speak(m.content)} style={{ fontSize: 10, color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, padding: '3px 6px', borderRadius: 6 }}
+                                                            onMouseEnter={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#4f46e5'; }}
+                                                            onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#94a3b8'; }}>
+                                                            <i className="fas fa-volume-up"></i> Listen
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <div ref={endRef} />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Input Taskbar (Floating Pill) */}
+                        <div style={{
+                            position: 'absolute', bottom: 20, left: 0, right: 0,
+                            display: 'flex', flexDirection: 'column', alignItems: 'center',
+                            padding: '0 20px', zIndex: 10, pointerEvents: 'none'
+                        }}>
+                            <div style={{ width: '100%', maxWidth: 720, pointerEvents: 'auto' }}>
+                                <form onSubmit={handleSend} style={{
+                                    background: 'white', borderRadius: 18, display: 'flex', alignItems: 'center',
+                                    border: '1.5px solid #e2e8f0',
+                                    boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+                                    padding: '6px 8px 6px 6px',
+                                    transition: 'border-color 0.2s, box-shadow 0.2s',
+                                }}
+                                    onFocusCapture={e => { e.currentTarget.style.borderColor = '#6366f1'; e.currentTarget.style.boxShadow = '0 4px 24px rgba(99,102,241,0.15)'; }}
+                                    onBlurCapture={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = '0 4px 24px rgba(0,0,0,0.08)'; }}>
+
+                                    {/* Mic button */}
+                                    <button type="button" onClick={toggleMic}
+                                        className={listening ? 'mic-pulse' : ''}
+                                        style={{
+                                            width: 42, height: 42, borderRadius: 12, border: 'none', cursor: 'pointer', flexShrink: 0,
+                                            background: listening ? '#ef4444' : '#f8fafc',
+                                            color: listening ? 'white' : '#94a3b8',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
+                                        }}>
+                                        <i className={`fas ${listening ? 'fa-stop' : 'fa-microphone'}`}></i>
+                                    </button>
+
+                                    {listening ? (
+                                        <div style={{ flex: 1, padding: '0 12px', fontSize: 13, color: '#ef4444', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', display: 'inline-block', animation: 'bounce 0.8s infinite' }}></span>
+                                            Listening… speak clearly
+                                        </div>
+                                    ) : (
+                                        <input
+                                            type="text"
+                                            value={input}
+                                            onChange={e => setInput(e.target.value)}
+                                            placeholder={modeConfig[mode]?.ph || "Message Aura AI..."}
+                                            disabled={loading}
+                                            autoFocus
+                                            style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 14, color: '#0f172a', padding: '0 12px' }}
+                                        />
+                                    )}
+
+                                    <button type="submit" disabled={loading || !input.trim() || listening}
+                                        style={{
+                                            width: 40, height: 40, borderRadius: 12, border: 'none', cursor: (loading || !input.trim() || listening) ? 'not-allowed' : 'pointer',
+                                            background: (loading || !input.trim() || listening) ? '#f1f5f9' : 'linear-gradient(135deg,#4f46e5,#7c3aed)',
+                                            color: (loading || !input.trim() || listening) ? '#cbd5e1' : 'white',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
+                                            flexShrink: 0, transition: 'all 0.18s',
+                                        }}>
+                                        <i className="fas fa-arrow-up"></i>
+                                    </button>
+                                </form>
+
+                                <p style={{ fontSize: 10, color: '#94a3b8', textAlign: 'center', marginTop: 7, fontWeight: 500 }}>
+                                    Aura AI — Your personal AI assistant
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* ── SETTINGS MODAL ── */}
+                    {settings && (
+                        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.45)', backdropFilter: 'blur(6px)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+                            onClick={e => { if (e.target === e.currentTarget) setSettings(false); }}>
+                            <div className="scale-up" style={{ background: 'white', borderRadius: 20, width: '100%', maxWidth: 500, boxShadow: '0 24px 64px rgba(0,0,0,0.18)', overflow: 'hidden', border: '1px solid #f1f5f9' }}>
+                                <div style={{ padding: '18px 24px', borderBottom: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fafafe' }}>
+                                    <h3 style={{ fontFamily: 'Outfit,sans-serif', fontWeight: 700, fontSize: 17, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <i className="fas fa-sliders-h" style={{ color: '#4f46e5' }}></i> Configure Aura AI
+                                    </h3>
+                                    <button onClick={() => setSettings(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', fontSize: 18, borderRadius: 8, padding: 4 }}>
+                                        <i className="fas fa-times"></i>
+                                    </button>
+                                </div>
+
+                                <form onSubmit={saveSettings} style={{ padding: '20px 24px' }}>
+                                    {[
+                                        { label: 'OpenRouter API Key', val: tKey, set: setTKey, type: 'password', mono: true, hint: 'Stored only in your browser. Never shared.' },
+                                    ].map(f => (
+                                        <div key={f.label} style={{ marginBottom: 16 }}>
+                                            <label style={{ fontSize: 10, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', display: 'block', marginBottom: 6, fontFamily: 'monospace' }}>{f.label}</label>
+                                            <input type={f.type || 'text'} value={f.val} onChange={e => f.set(e.target.value)}
+                                                style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 12, outline: 'none', fontSize: 13, fontFamily: f.mono ? 'monospace' : 'Inter,sans-serif', color: '#0f172a' }}
+                                                onFocus={e => e.target.style.borderColor = '#6366f1'}
+                                                onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                                            {f.hint && <p style={{ fontSize: 10, color: '#94a3b8', marginTop: 4 }}>{f.hint}</p>}
+                                        </div>
+                                    ))}
+
+                                    <div style={{ marginBottom: 16 }}>
+                                        <label style={{ fontSize: 10, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', display: 'block', marginBottom: 6, fontFamily: 'monospace' }}>AI Model</label>
+                                        <select value={tMdl} onChange={e => setTMdl(e.target.value)}
+                                            style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 12, outline: 'none', fontSize: 13, background: 'white', color: '#0f172a', cursor: 'pointer' }}
+                                            onFocus={e => e.target.style.borderColor = '#6366f1'}
+                                            onBlur={e => e.target.style.borderColor = '#e2e8f0'}>
+                                            <option value="google/gemini-2.5-flash">Google Gemini 2.5 Flash (Default)</option>
+                                            <option value="google/gemini-2.5-pro">Google Gemini 2.5 Pro</option>
+                                            <option value="deepseek/deepseek-chat">DeepSeek V3</option>
+                                            <option value="meta-llama/llama-3-8b-instruct:free">Meta Llama 3 8B (Free)</option>
+                                            <option value="custom">Custom model…</option>
+                                        </select>
+                                    </div>
+
+                                    {tMdl === 'custom' && (
+                                        <div style={{ marginBottom: 16 }} className="fade-in">
+                                            <label style={{ fontSize: 10, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', display: 'block', marginBottom: 6, fontFamily: 'monospace' }}>Custom Model ID</label>
+                                            <input type="text" value={tCMdl} onChange={e => setTCMdl(e.target.value)} placeholder="e.g. anthropic/claude-3-haiku"
+                                                style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 12, outline: 'none', fontSize: 13, fontFamily: 'monospace', color: '#0f172a' }}
+                                                onFocus={e => e.target.style.borderColor = '#6366f1'}
+                                                onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                                        </div>
+                                    )}
+
+                                    <div style={{ marginBottom: 20 }}>
+                                        <label style={{ fontSize: 10, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', display: 'block', marginBottom: 6, fontFamily: 'monospace' }}>System Instructions</label>
+                                        <textarea value={tSys} onChange={e => setTSys(e.target.value)} rows={3}
+                                            style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 12, outline: 'none', fontSize: 13, resize: 'none', color: '#0f172a' }}
+                                            onFocus={e => e.target.style.borderColor = '#6366f1'}
+                                            onBlur={e => e.target.style.borderColor = '#e2e8f0'} />
+                                    </div>
+
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 16, borderTop: '1px solid #f1f5f9' }}>
+                                        <button type="button" onClick={() => { setTKey(DEFAULT_KEY); setTMdl(DEFAULT_MODEL); setTCMdl(''); setTSys(DEFAULT_SYS); }}
+                                            style={{ fontSize: 12, color: '#94a3b8', background: 'none', border: 'none', cursor: 'pointer', padding: '6px 10px', borderRadius: 8 }}
+                                            onMouseEnter={e => e.currentTarget.style.color = '#475569'}
+                                            onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}>
+                                            Reset Defaults
+                                        </button>
+                                        <div style={{ display: 'flex', gap: 8 }}>
+                                            <button type="button" onClick={() => setSettings(false)}
+                                                style={{ padding: '8px 18px', borderRadius: 10, border: '1.5px solid #e2e8f0', background: 'none', cursor: 'pointer', fontSize: 13, color: '#475569', fontWeight: 500 }}>
+                                                Cancel
+                                            </button>
+                                            <button type="submit"
+                                                style={{ padding: '8px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', color: 'white', cursor: 'pointer', fontSize: 13, fontWeight: 600, boxShadow: '0 4px 12px rgba(79,70,229,0.3)' }}>
+                                                Save Settings
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+
+                </div>
+            );
+        };
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
+
 </html>
