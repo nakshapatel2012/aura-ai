@@ -32,6 +32,9 @@
     <!-- Marked.js (Markdown) -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
     <style>
         *,
         *::before,
@@ -48,8 +51,8 @@
             width: 100%;
             overflow: hidden;
             font-family: 'Inter', sans-serif;
-            background: #f8fafc;
-            color: #1e293b;
+            background: transparent;
+            color: #f8fafc;
         }
 
         h1,
@@ -60,13 +63,26 @@
             font-family: 'Outfit', sans-serif;
         }
 
-        /* Subtle grid background */
+        /* Dark Cosmic 3D background */
         .bg-grid {
-            background-color: #f8fafc;
-            background-image:
-                linear-gradient(rgba(226, 232, 240, 0.5) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(226, 232, 240, 0.5) 1px, transparent 1px);
+            background-color: #050811;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.25) 0%, rgba(124, 58, 237, 0.15) 90%),
+                radial-gradient(circle at 80% 80%, rgba(56, 189, 248, 0.1) 0%, transparent 60%);
+            background-size: cover;
+            position: relative;
+        }
+        
+        .bg-grid::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
             background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
         }
 
         /* Scrollbar */
@@ -410,35 +426,35 @@
             align-items: center;
             gap: 8px;
             padding: 8px 16px;
-            background: #e2e8f0;
-            border: 1.5px solid #cbd5e1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-bottom: none;
-            border-radius: 12px 12px 0 0;
+            border-radius: 14px 14px 0 0;
             font-size: 12.5px;
             font-weight: 500;
-            color: #64748b;
+            color: #94a3b8;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
             white-space: nowrap;
             max-width: 170px;
             height: 36px;
             position: relative;
+            backdrop-filter: blur(10px);
         }
 
         .curvy-tab.active {
-            background: white;
-            color: #4f46e5;
-            border-color: #cbd5e1;
-            border-bottom-color: white;
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.2);
             font-weight: 600;
-            box-shadow: 0 -3px 8px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.2);
             height: 38px;
             z-index: 10;
         }
 
         .curvy-tab:hover:not(.active) {
-            background: #cbd5e1;
-            color: #1e293b;
+            background: rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
         }
 
         .curvy-tab-close {
@@ -465,23 +481,24 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 34px;
-            height: 30px;
-            background: #ede9fe;
-            border: 1.5px solid #d8b4fe;
+            width: 36px;
+            height: 32px;
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px solid rgba(139, 92, 246, 0.3);
             border-bottom: none;
-            border-radius: 8px 8px 0 0;
-            color: #7c3aed;
+            border-radius: 10px 10px 0 0;
+            color: #c084fc;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
             margin-bottom: 0px;
             flex-shrink: 0;
+            backdrop-filter: blur(10px);
         }
 
         .new-tab-btn:hover {
-            background: #c084fc;
+            background: rgba(139, 92, 246, 0.3);
             color: white;
-            border-color: #c084fc;
+            border-color: rgba(139, 92, 246, 0.5);
         }
     </style>
 </head>
@@ -671,236 +688,132 @@
             </div>
         );
 
-        /* ── Authentication Portal (Gmail only) ── */
+        /* ── Authentication Portal (Custom 3D Login) ── */
         const AuthPortal = ({ onLogin, logoComponent }) => {
-            const [email, setEmail] = useState('');
-            const [otp, setOtp] = useState('');
-            const [step, setStep] = useState('email'); // 'email' or 'otp'
+            const [isLogin, setIsLogin] = useState(true);
+            const [username, setUsername] = useState('');
+            const [password, setPassword] = useState('');
             const [error, setError] = useState('');
-            const [loading, setLoading] = useState(false);
-            const [generatedOtp, setGeneratedOtp] = useState('');
-            const [generatedAuraId, setGeneratedAuraId] = useState('');
-            const [simulatedMailToast, setSimulatedMailToast] = useState(null);
+            const [isHovered, setIsHovered] = useState(false);
 
-            const handleSendOtp = (e) => {
+            const handleSubmit = (e) => {
                 e.preventDefault();
                 setError('');
-                const trimmedEmail = email.trim().toLowerCase();
-                if (!trimmedEmail) {
-                    setError('Email is required.');
+                if (!username.trim() || !password.trim()) {
+                    setError('Please fill in all fields.');
                     return;
                 }
-                if (!trimmedEmail.endsWith('@gmail.com')) {
-                    setError('Currently, only Gmail addresses (@gmail.com) are supported.');
-                    return;
+                const users = JSON.parse(localStorage.getItem('aura_users') || '{}');
+                if (isLogin) {
+                    if (users[username] && users[username].password === password) {
+                        onLogin({ email: username, auraId: users[username].auraId, name: username });
+                    } else {
+                        setError('Invalid username or password.');
+                    }
+                } else {
+                    if (users[username]) {
+                        setError('Username is already taken.');
+                    } else {
+                        const randHex = () => Math.floor(0x1000 + Math.random() * 0xf000).toString(16).toUpperCase();
+                        const auraId = `AURA-${randHex()}-${randHex()}`;
+                        users[username] = { password, auraId };
+                        localStorage.setItem('aura_users', JSON.stringify(users));
+                        onLogin({ email: username, auraId, name: username });
+                    }
                 }
-
-                setLoading(true);
-
-                // Generate verification details
-                const cleanOtp = Math.floor(100000 + Math.random() * 900000).toString();
-                // Generate unique Aura ID
-                const randHex = () => Math.floor(0x1000 + Math.random() * 0xf000).toString(16).toUpperCase();
-                const auraId = `AURA-${randHex()}-${randHex()}`;
-
-                setTimeout(() => {
-                    setGeneratedOtp(cleanOtp);
-                    setGeneratedAuraId(auraId);
-                    setStep('otp');
-                    setLoading(false);
-
-                    // Show simulated mail notification
-                    setSimulatedMailToast({
-                        to: trimmedEmail,
-                        otp: cleanOtp,
-                        auraId: auraId
-                    });
-                }, 1200);
-            };
-
-            const handleVerifyOtp = (e) => {
-                e.preventDefault();
-                setError('');
-                if (otp.trim() !== generatedOtp) {
-                    setError('Invalid verification code. Please try again.');
-                    return;
-                }
-
-                setLoading(true);
-                setTimeout(() => {
-                    const newAccount = { email: email.trim().toLowerCase(), auraId: generatedAuraId, verifiedAt: new Date().toISOString() };
-                    localStorage.setItem('aura_account', JSON.stringify(newAccount));
-                    onLogin(newAccount);
-                    setLoading(false);
-                }, 1000);
             };
 
             return (
                 <div style={{
                     height: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     background: 'radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, rgba(124, 58, 237, 0.08) 90.2%), #090d16',
-                    fontFamily: "'Inter', sans-serif", overflow: 'hidden', position: 'relative'
+                    fontFamily: "'Inter', sans-serif", overflow: 'hidden', position: 'relative',
+                    perspective: '1000px'
                 }}>
                     <div style={{ position: 'absolute', top: '-10%', left: '-10%', width: '40vw', height: '40vw', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.15)', filter: 'blur(120px)' }}></div>
                     <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '45vw', height: '45vw', borderRadius: '50%', background: 'rgba(124, 58, 237, 0.12)', filter: 'blur(140px)' }}></div>
 
-                    {simulatedMailToast && (
-                        <div className="fade-in" style={{
-                            position: 'fixed', top: 20, right: 20, zIndex: 100,
-                            maxWidth: 380, width: 'calc(100% - 40px)', background: 'rgba(30, 41, 59, 0.95)',
-                            border: '1.5px solid rgba(99, 102, 241, 0.3)', borderRadius: 16,
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.5)', backdropFilter: 'blur(10px)',
-                            padding: 16, color: '#f8fafc'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 8, marginBottom: 8 }}>
-                                <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-                                    <i className="fas fa-envelope" style={{ fontSize: 12 }}></i>
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <h4 style={{ fontSize: 11, fontWeight: 700, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Simulated Gmail Server</h4>
-                                    <p style={{ fontSize: 9, color: '#94a3b8' }}>Sent to: {simulatedMailToast.to}</p>
-                                </div>
-                                <button onClick={() => setSimulatedMailToast(null)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 14 }}>
-                                    <i className="fas fa-times"></i>
-                                </button>
-                            </div>
-                            <div style={{ fontSize: 12, lineHeight: 1.5, color: '#cbd5e1' }}>
-                                <p style={{ marginBottom: 6 }}>Your Aura Verification OTP is: <strong style={{ color: '#818cf8', fontFamily: 'monospace', fontSize: 15 }}>{simulatedMailToast.otp}</strong></p>
-                                <p>Your unique Account ID: <code style={{ background: 'rgba(99, 102, 241, 0.2)', padding: '2px 6px', borderRadius: 4, fontSize: 10, color: '#a5b4fc', fontFamily: 'monospace' }}>{simulatedMailToast.auraId}</code></p>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="scale-up" style={{
-                        width: '100%', maxWidth: 440, padding: '40px 32px',
-                        background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(16px)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: 24,
-                        boxShadow: '0 30px 60px rgba(0, 0, 0, 0.4)',
-                        color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 10
+                    <div className="scale-up" 
+                        onMouseEnter={() => setIsHovered(true)}
+                        onMouseLeave={() => setIsHovered(false)}
+                        style={{
+                        width: '100%', maxWidth: 400, padding: '40px 32px',
+                        background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.4))', backdropFilter: 'blur(20px)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: 24,
+                        boxShadow: isHovered ? '0 40px 80px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255,255,255,0.2)' : '0 30px 60px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255,255,255,0.1)',
+                        color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 10,
+                        transform: isHovered ? 'translateY(-5px) rotateX(2deg) rotateY(-2deg)' : 'translateY(0) rotateX(0) rotateY(0)',
+                        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
                     }}>
-                        <div style={{ marginBottom: 20, filter: 'drop-shadow(0 4px 12px rgba(99,102,241,0.3))' }}>
+                        <div style={{ marginBottom: 20, filter: 'drop-shadow(0 4px 12px rgba(99,102,241,0.5))', transform: 'translateZ(20px)' }}>
                             {logoComponent}
                         </div>
 
-                        <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 28, fontWeight: 800, background: 'linear-gradient(135deg, #a5b4fc, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: 8 }}>
-                            Create Aura Account
+                        <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 28, fontWeight: 800, background: 'linear-gradient(135deg, #a5b4fc, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: 8, transform: 'translateZ(15px)' }}>
+                            Aura AI
                         </h2>
-                        <p style={{ fontSize: 13, color: '#94a3b8', textAlign: 'center', lineHeight: 1.6, marginBottom: 28, maxWidth: 320 }}>
-                            Create or access your personal Aura profile. Only Google Mail (@gmail.com) accounts are supported currently.
+                        <p style={{ fontSize: 13, color: '#94a3b8', textAlign: 'center', lineHeight: 1.6, marginBottom: 28, maxWidth: 320, transform: 'translateZ(10px)' }}>
+                            {isLogin ? 'Sign in to access your personal AI workspace.' : 'Create an account to join the future.'}
                         </p>
 
                         {error && (
                             <div style={{
                                 width: '100%', padding: '10px 14px', background: 'rgba(239, 68, 68, 0.15)',
                                 border: '1.5px solid rgba(239, 68, 68, 0.3)', borderRadius: 12,
-                                color: '#fca5a5', fontSize: 12, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16
+                                color: '#fca5a5', fontSize: 12, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16,
+                                transform: 'translateZ(10px)'
                             }}>
                                 <i className="fas fa-exclamation-circle" style={{ flexShrink: 0 }}></i>
                                 <span>{error}</span>
                             </div>
                         )}
 
-                        {step === 'email' ? (
-                            <form onSubmit={handleSendOtp} style={{ width: '100%' }}>
-                                <div style={{ marginBottom: 20 }}>
-                                    <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6, fontFamily: 'monospace' }}>Gmail Address</label>
-                                    <div style={{ position: 'relative' }}>
-                                        <span style={{ position: 'absolute', left: 14, top: 12, color: '#64748b' }}>
-                                            <i className="far fa-envelope"></i>
-                                        </span>
-                                        <input
-                                            type="email"
-                                            placeholder="yourname@gmail.com"
-                                            value={email}
-                                            onChange={e => setEmail(e.target.value)}
-                                            disabled={loading}
-                                            required
-                                            style={{
-                                                width: '100%', padding: '10px 14px 10px 38px',
-                                                background: 'rgba(15, 23, 42, 0.5)', border: '1.5px solid rgba(255, 255, 255, 0.15)',
-                                                borderRadius: 12, outline: 'none', fontSize: 13, color: 'white', transition: 'border-color 0.2s'
-                                            }}
-                                            onFocus={e => e.target.style.borderColor = '#6366f1'}
-                                            onBlur={e => e.target.style.borderColor = 'rgba(255, 255, 255, 0.15)'}
-                                        />
-                                    </div>
-                                </div>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
+                        <form onSubmit={handleSubmit} style={{ width: '100%', transform: 'translateZ(15px)' }}>
+                            <div style={{ marginBottom: 16 }}>
+                                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#cbd5e1', marginBottom: 6 }}>Username</label>
+                                <input type="text" value={username} onChange={e => setUsername(e.target.value)}
                                     style={{
-                                        width: '100%', padding: '12px 18px', border: 'none', borderRadius: 12,
-                                        background: 'linear-gradient(135deg, #4f46e5, #7c3aed)', color: 'white',
-                                        fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                                        boxShadow: '0 10px 20px rgba(79, 70, 229, 0.3)', transition: 'transform 0.2s'
+                                        width: '100%', padding: '12px 16px', background: 'rgba(255,255,255,0.05)',
+                                        border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: 'white',
+                                        outline: 'none', transition: 'border-color 0.2s, background 0.2s', fontSize: 14
                                     }}
-                                >
-                                    {loading ? (
-                                        <>
-                                            <i className="fas fa-spinner fa-spin"></i> Generating Aura ID...
-                                        </>
-                                    ) : (
-                                        <>
-                                            Get Verification ID <i className="fas fa-arrow-right"></i>
-                                        </>
-                                    )}
-                                </button>
-                            </form>
-                        ) : (
-                            <form onSubmit={handleVerifyOtp} style={{ width: '100%' }}>
-                                <div style={{ marginBottom: 20 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                                        <label style={{ fontSize: 10, fontWeight: 700, color: '#a5b4fc', textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: 'monospace' }}>Verification Code</label>
-                                        <button type="button" onClick={() => setStep('email')} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: 10, cursor: 'pointer', textDecoration: 'underline' }}>Change Email</button>
-                                    </div>
-                                    <div style={{ position: 'relative' }}>
-                                        <span style={{ position: 'absolute', left: 14, top: 12, color: '#64748b' }}>
-                                            <i className="fas fa-key"></i>
-                                        </span>
-                                        <input
-                                            type="text"
-                                            placeholder="Enter 6-digit OTP"
-                                            maxLength={6}
-                                            value={otp}
-                                            onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
-                                            disabled={loading}
-                                            required
-                                            style={{
-                                                width: '100%', padding: '10px 14px 10px 38px',
-                                                background: 'rgba(15, 23, 42, 0.5)', border: '1.5px solid rgba(255, 255, 255, 0.15)',
-                                                borderRadius: 12, outline: 'none', fontSize: 14, color: 'white', letterSpacing: '0.2em', textAlign: 'center', transition: 'border-color 0.2s'
-                                            }}
-                                            onFocus={e => e.target.style.borderColor = '#6366f1'}
-                                            onBlur={e => e.target.style.borderColor = 'rgba(255, 255, 255, 0.15)'}
-                                        />
-                                    </div>
-                                    <p style={{ fontSize: 10, color: '#64748b', marginTop: 6, textAlign: 'center' }}>Check the simulated mailer notification at the top right.</p>
-                                </div>
-                                <button
-                                    type="submit"
-                                    disabled={loading || otp.length < 6}
+                                    onFocus={e => { e.target.style.borderColor = '#6366f1'; e.target.style.background = 'rgba(255,255,255,0.1)'; }}
+                                    onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(255,255,255,0.05)'; }}
+                                />
+                            </div>
+                            <div style={{ marginBottom: 24 }}>
+                                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#cbd5e1', marginBottom: 6 }}>Password</label>
+                                <input type="password" value={password} onChange={e => setPassword(e.target.value)}
                                     style={{
-                                        width: '100%', padding: '12px 18px', border: 'none', borderRadius: 12,
-                                        background: (loading || otp.length < 6) ? 'rgba(255,255,255,0.1)' : 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-                                        color: (loading || otp.length < 6) ? '#64748b' : 'white',
-                                        fontSize: 14, fontWeight: 600, cursor: (loading || otp.length < 6) ? 'not-allowed' : 'pointer',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                                        boxShadow: (loading || otp.length < 6) ? 'none' : '0 10px 20px rgba(79, 70, 229, 0.3)'
+                                        width: '100%', padding: '12px 16px', background: 'rgba(255,255,255,0.05)',
+                                        border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: 'white',
+                                        outline: 'none', transition: 'border-color 0.2s, background 0.2s', fontSize: 14
                                     }}
-                                >
-                                    {loading ? (
-                                        <>
-                                            <i className="fas fa-spinner fa-spin"></i> Unlocking Workspace...
-                                        </>
-                                    ) : (
-                                        <>
-                                            Unlock Aura AI <i className="fas fa-lock-open"></i>
-                                        </>
-                                    )}
-                                </button>
-                            </form>
-                        )}
+                                    onFocus={e => { e.target.style.borderColor = '#6366f1'; e.target.style.background = 'rgba(255,255,255,0.1)'; }}
+                                    onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(255,255,255,0.05)'; }}
+                                />
+                            </div>
+                            <button type="submit" style={{
+                                width: '100%', padding: '12px', borderRadius: 12, border: 'none',
+                                background: 'linear-gradient(135deg, #6366f1, #a855f7)', color: 'white',
+                                fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                                boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)',
+                                transition: 'transform 0.2s, box-shadow 0.2s'
+                            }}
+                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(99, 102, 241, 0.6)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.4)'; }}
+                            >
+                                {isLogin ? 'Sign In' : 'Sign Up'}
+                            </button>
+                        </form>
+                        
+                        <div style={{ marginTop: 20, fontSize: 12, color: '#94a3b8', transform: 'translateZ(10px)' }}>
+                            {isLogin ? "Don't have an account? " : "Already have an account? "}
+                            <button onClick={() => { setIsLogin(!isLogin); setError(''); }}
+                                style={{ background: 'none', border: 'none', color: '#a5b4fc', cursor: 'pointer', fontWeight: 600, padding: 0 }}>
+                                {isLogin ? 'Sign up' : 'Sign in'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             );
@@ -1217,21 +1130,22 @@
 
             /* ═══════════════ RENDER ═══════════════ */
             if (!account) {
-                return <AuthPortal onLogin={setAccount} logoComponent={<Logo size={80} />} />;
+                return <AuthPortal onLogin={(acc) => { localStorage.setItem('aura_account', JSON.stringify(acc)); setAccount(acc); }} logoComponent={<Logo size={80} />} />;
             }
 
             return (
-                <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#f8fafc' }}>
+                <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'transparent' }}>
 
                     {/* ── TOP HEADER (Includes curvy tabs & actions) ── */}
                     <header style={{
-                        background: '#ffffff',
-                        borderBottom: '1px solid #e2e8f0',
+                        background: 'rgba(15, 23, 42, 0.4)',
+                        backdropFilter: 'blur(16px)',
+                        borderBottom: '1px solid rgba(255,255,255,0.05)',
                         display: 'flex',
                         flexDirection: 'column',
                         flexShrink: 0,
                         zIndex: 20,
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+                        boxShadow: '0 4px 30px rgba(0,0,0,0.2)'
                     }}>
                         {/* Top Row: Brand Info + Actions */}
                         <div style={{
@@ -1240,37 +1154,16 @@
                             alignItems: 'center',
                             justifyContent: 'space-between',
                             padding: '0 20px',
-                            borderBottom: '1px solid #f1f5f9'
+                            borderBottom: '1px solid rgba(255,255,255,0.05)'
                         }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                                 <Logo size={32} />
-                                <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 18, color: '#0f172a', letterSpacing: '-0.02em' }}>Aura AI</span>
-                                <span style={{ fontSize: 9, background: '#ede9fe', color: '#7c3aed', fontWeight: 700, padding: '2px 8px', borderRadius: 99, fontFamily: 'monospace' }}>V2.0</span>
+                                <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 18, color: '#f8fafc', letterSpacing: '-0.02em' }}>Aura AI</span>
+                                <span style={{ fontSize: 9, background: 'rgba(139, 92, 246, 0.2)', color: '#c084fc', fontWeight: 700, padding: '2px 8px', borderRadius: 99, fontFamily: 'monospace' }}>V3.0</span>
                             </div>
 
-                            {/* Top Right Actions: Feedback + Settings + Account Profile */}
+                            {/* Top Right Actions: Account Profile */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative' }}>
-                                {/* Feedback mail link */}
-                                <a href="mailto:auraai.naksh@gmail.com?subject=Aura%20AI%20Feedback&body=Hi%20Aura%20AI%20Team,%0D%0A%0D%0AMy%20Feedback:%0D%0A"
-                                    style={{
-                                        display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none',
-                                        padding: '6px 12px', borderRadius: 8, background: '#f0fdf4', color: '#16a34a',
-                                        fontSize: 12, fontWeight: 600, border: '1px solid #bbf7d0', transition: 'all 0.2s'
-                                    }}>
-                                    <i className="far fa-envelope"></i> Feedback
-                                </a>
-
-                                {/* Settings button */}
-                                <button onClick={openSettings}
-                                    style={{
-                                        width: 34, height: 34, borderRadius: 8, background: '#f8fafc',
-                                        border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        color: '#64748b', cursor: 'pointer', transition: 'all 0.2s'
-                                    }}
-                                    title="Settings">
-                                    <i className="fas fa-cog"></i>
-                                </button>
-
                                 {/* Profile Dropdown Trigger */}
                                 <button onClick={() => setProfileDropdown(p => !p)}
                                     style={{
@@ -1331,8 +1224,7 @@
                         {/* Bottom Row: Curvy, boxy conversation tabs list */}
                         <div style={{
                             height: 44,
-                            background: '#f8fafc',
-                            borderBottom: '1px solid #e2e8f0',
+                            background: 'transparent',
                             display: 'flex',
                             alignItems: 'flex-end',
                             overflow: 'hidden',
@@ -1389,29 +1281,28 @@
                                     <h1 style={{ fontSize: 32, fontWeight: 800, background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: 10, fontFamily: 'Outfit,sans-serif' }}>
                                         How can I help you today?
                                     </h1>
-                                    <p style={{ fontSize: 13, color: '#94a3b8', maxWidth: 440, lineHeight: 1.6, marginBottom: 32 }}>
-                                        Chat with AI, generate gorgeous images using <code>/image</code>, or create stop-motion video loops with <code>/video</code>.
-                                    </p>
+
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, width: '100%', textAlign: 'left' }}>
                                         {STARTERS.map((s, i) => (
                                             <div key={i} onClick={() => handleSend(null, s.prompt)}
                                                 className="fade-in"
                                                 style={{
-                                                    padding: '14px 16px', borderRadius: 14, cursor: 'pointer',
-                                                    background: 'white', border: '1px solid #e2e8f0',
-                                                    boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-                                                    display: 'flex', alignItems: 'flex-start', gap: 12,
-                                                    transition: 'all 0.2s',
-                                                    animationDelay: `${i * 0.06}s`,
+                                                    padding: '16px 20px', borderRadius: 20, cursor: 'pointer',
+                                                    background: 'rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(12px)',
+                                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1)',
+                                                    display: 'flex', alignItems: 'center', gap: 14,
+                                                    transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                                    animationDelay: `${i * 0.08}s`,
                                                 }}
-                                                onMouseEnter={e => { e.currentTarget.style.borderColor = '#a5b4fc'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(79,70,229,0.1)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                                                onMouseLeave={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.05)'; e.currentTarget.style.transform = 'translateY(0)'; }}>
-                                                <div style={{ width: 34, height: 34, borderRadius: 9, background: '#ede9fe', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4f46e5', flexShrink: 0 }}>
-                                                    <i className={`fas ${s.icon}`} style={{ fontSize: 13 }}></i>
+                                                onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(165, 180, 252, 0.5)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(99, 102, 241, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.2)'; e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)'; }}
+                                                onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1)'; e.currentTarget.style.transform = 'translateY(0) scale(1)'; }}>
+                                                <div style={{ width: 44, height: 44, borderRadius: 14, background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(124, 58, 237, 0.15))', border: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a5b4fc', flexShrink: 0 }}>
+                                                    <i className={`fas ${s.icon}`} style={{ fontSize: 16 }}></i>
                                                 </div>
                                                 <div style={{ minWidth: 0 }}>
-                                                    <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>{s.title}</div>
-                                                    <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{s.desc}</div>
+                                                    <div style={{ fontSize: 14, fontWeight: 700, color: '#f1f5f9' }}>{s.title}</div>
+                                                    <div style={{ fontSize: 12, color: '#cbd5e1', marginTop: 4 }}>{s.desc}</div>
                                                 </div>
                                             </div>
                                         ))}
@@ -1492,51 +1383,33 @@
                         }}>
                             <div style={{ width: '100%', maxWidth: 720, pointerEvents: 'auto' }}>
                                 <form onSubmit={handleSend} style={{
-                                    background: 'white', borderRadius: 18, display: 'flex', alignItems: 'center',
-                                    border: '1.5px solid #e2e8f0',
-                                    boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-                                    padding: '6px 8px 6px 6px',
-                                    transition: 'border-color 0.2s, box-shadow 0.2s',
+                                    background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(20px)', borderRadius: 24, display: 'flex', alignItems: 'center',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.05)',
+                                    padding: '8px 10px 8px 8px',
+                                    transition: 'border-color 0.3s, box-shadow 0.3s',
                                 }}
-                                    onFocusCapture={e => { e.currentTarget.style.borderColor = '#6366f1'; e.currentTarget.style.boxShadow = '0 4px 24px rgba(99,102,241,0.15)'; }}
-                                    onBlurCapture={e => { e.currentTarget.style.borderColor = '#e2e8f0'; e.currentTarget.style.boxShadow = '0 4px 24px rgba(0,0,0,0.08)'; }}>
+                                    onFocusCapture={e => { e.currentTarget.style.borderColor = 'rgba(165, 180, 252, 0.4)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(99, 102, 241, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1)'; }}
+                                    onBlurCapture={e => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.05)'; }}>
 
-                                    {/* Mic button */}
-                                    <button type="button" onClick={toggleMic}
-                                        className={listening ? 'mic-pulse' : ''}
+                                    <input
+                                        type="text"
+                                        value={input}
+                                        onChange={e => setInput(e.target.value)}
+                                        placeholder={modeConfig[mode]?.ph || "Message Aura AI..."}
+                                        disabled={loading}
+                                        autoFocus
+                                        style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 15, color: 'white', padding: '0 16px' }}
+                                    />
+
+                                    <button type="submit" disabled={loading || !input.trim()}
                                         style={{
-                                            width: 42, height: 42, borderRadius: 12, border: 'none', cursor: 'pointer', flexShrink: 0,
-                                            background: listening ? '#ef4444' : '#f8fafc',
-                                            color: listening ? 'white' : '#94a3b8',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
-                                        }}>
-                                        <i className={`fas ${listening ? 'fa-stop' : 'fa-microphone'}`}></i>
-                                    </button>
-
-                                    {listening ? (
-                                        <div style={{ flex: 1, padding: '0 12px', fontSize: 13, color: '#ef4444', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8 }}>
-                                            <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', display: 'inline-block', animation: 'bounce 0.8s infinite' }}></span>
-                                            Listening… speak clearly
-                                        </div>
-                                    ) : (
-                                        <input
-                                            type="text"
-                                            value={input}
-                                            onChange={e => setInput(e.target.value)}
-                                            placeholder={modeConfig[mode]?.ph || "Message Aura AI..."}
-                                            disabled={loading}
-                                            autoFocus
-                                            style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 14, color: '#0f172a', padding: '0 12px' }}
-                                        />
-                                    )}
-
-                                    <button type="submit" disabled={loading || !input.trim() || listening}
-                                        style={{
-                                            width: 40, height: 40, borderRadius: 12, border: 'none', cursor: (loading || !input.trim() || listening) ? 'not-allowed' : 'pointer',
-                                            background: (loading || !input.trim() || listening) ? '#f1f5f9' : 'linear-gradient(135deg,#4f46e5,#7c3aed)',
-                                            color: (loading || !input.trim() || listening) ? '#cbd5e1' : 'white',
-                                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
-                                            flexShrink: 0, transition: 'all 0.18s',
+                                            width: 44, height: 44, borderRadius: 16, border: 'none', cursor: (loading || !input.trim()) ? 'not-allowed' : 'pointer',
+                                            background: (loading || !input.trim()) ? 'rgba(255, 255, 255, 0.05)' : 'linear-gradient(135deg, #6366f1, #a855f7)',
+                                            color: (loading || !input.trim()) ? 'rgba(255, 255, 255, 0.2)' : 'white',
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
+                                            flexShrink: 0, transition: 'all 0.2s',
+                                            boxShadow: (loading || !input.trim()) ? 'none' : '0 4px 15px rgba(99, 102, 241, 0.3)',
                                         }}>
                                         <i className="fas fa-arrow-up"></i>
                                     </button>
