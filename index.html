@@ -4,10 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aura AI — Your Personal Assistant</title>
+    <title>Aura AI v4.2 — Your Advanced Assistant</title>
     <link rel="icon" type="image/png" href="logo.png">
     <meta name="description"
-        content="Aura AI is a multimodal AI workspace with chat, voice, image generation and video generation.">
+        content="Aura AI v4.2 is a multimodal AI workspace with chat, voice, image generation and video generation.">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -31,6 +31,9 @@
 
     <!-- Marked.js (Markdown) -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Mammoth (DOCX parser) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 
     <!-- Google Identity Services -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -63,24 +66,28 @@
             font-family: 'Outfit', sans-serif;
         }
 
-        /* Dark Cosmic 3D background */
+        @keyframes aura-flow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* High Contrast Pitch Black Background */
         .bg-grid {
-            background-color: #050811;
+            background-color: #09090b;
             background-image: 
-                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.25) 0%, rgba(124, 58, 237, 0.15) 90%),
-                radial-gradient(circle at 80% 80%, rgba(56, 189, 248, 0.1) 0%, transparent 60%);
-            background-size: cover;
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 60%),
+                radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
             position: relative;
+            animation: aura-flow 20s ease infinite alternate;
         }
         
         .bg-grid::before {
             content: "";
             position: absolute;
             inset: 0;
-            background-image: 
-                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-            background-size: 40px 40px;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 60px 60px;
             pointer-events: none;
             z-index: 0;
         }
@@ -88,6 +95,7 @@
         /* Scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
+            height: 6px;
         }
 
         ::-webkit-scrollbar-track {
@@ -167,11 +175,11 @@
             flex-shrink: 0;
         }
 
-        /* Markdown prose */
+        /* Markdown prose - Dark Mode Optimized */
         .prose {
             font-size: 14.5px;
             line-height: 1.65;
-            color: #334155;
+            color: #e2e8f0;
         }
 
         .prose p {
@@ -187,7 +195,7 @@
         .prose h3 {
             font-family: 'Outfit', sans-serif;
             font-weight: 600;
-            color: #0f172a;
+            color: #f8fafc;
             margin: 1rem 0 0.4rem;
         }
 
@@ -222,8 +230,8 @@
         }
 
         .prose strong {
-            color: #0f172a;
-            font-weight: 600;
+            color: #f8fafc;
+            font-weight: 700;
         }
 
         .prose em {
@@ -231,14 +239,14 @@
         }
 
         .prose a {
-            color: #4f46e5;
+            color: #a5b4fc;
             text-decoration: underline;
         }
 
         .prose blockquote {
-            border-left: 4px solid #7c3aed;
+            border-left: 4px solid #8b5cf6;
             padding-left: 1rem;
-            color: #64748b;
+            color: #94a3b8;
             font-style: italic;
             margin: 1rem 0;
         }
@@ -252,15 +260,15 @@
 
         .prose th,
         .prose td {
-            border: 1px solid #e2e8f0;
+            border: 1px solid #334155;
             padding: 0.45rem 0.7rem;
             text-align: left;
         }
 
         .prose th {
-            background: #f1f5f9;
+            background: #1e293b;
             font-weight: 600;
-            color: #0f172a;
+            color: #f8fafc;
         }
 
         .prose pre {
@@ -523,6 +531,13 @@
             { icon: 'fa-graduation-cap', title: 'Learn something', desc: 'Quantum computing basics', prompt: 'Explain quantum computing in simple terms, including qubits and superposition.' },
         ];
 
+        const IMAGE_STARTERS = [
+            { icon: 'fa-paint-brush', title: 'Cyberpunk City', desc: 'Neon lights, rainy streets', prompt: 'A futuristic cyberpunk city with neon lights and flying cars, raining heavily' },
+            { icon: 'fa-camera', title: 'Realistic Portrait', desc: 'Detailed, cinematic lighting', prompt: 'A highly detailed cinematic portrait of a warrior, 8k resolution, photorealistic' },
+            { icon: 'fa-palette', title: 'Abstract Art', desc: 'Fluid colors, expressionist', prompt: 'Abstract painting with fluid colors mixing together, expressionist style' },
+            { icon: 'fa-mountain', title: 'Fantasy Landscape', desc: 'Mountains, floating islands', prompt: 'A fantasy landscape with floating islands and majestic mountains at sunset' },
+        ];
+
         /* ── Logo Image with gradient fallback ── */
         const Logo = ({ size = 32, className = '' }) => {
             const [err, setErr] = useState(false);
@@ -556,7 +571,7 @@
 
         /* ── Image result card ── */
         const ImageCard = ({ url, prompt }) => (
-            <div className="img-card" style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #e2e8f0', background: 'white', width: '100%', maxWidth: 420 }}>
+            <div className="img-card" style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #e2e8f0', background: 'white', width: '100%', maxWidth: 720 }}>
                 <div style={{ position: 'relative', paddingBottom: '100%', background: '#f1f5f9' }}>
                     <img src={url} alt={prompt} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                     <div className="img-overlay">
@@ -688,136 +703,7 @@
             </div>
         );
 
-        /* ── Authentication Portal (Custom 3D Login) ── */
-        const AuthPortal = ({ onLogin, logoComponent }) => {
-            const [isLogin, setIsLogin] = useState(true);
-            const [username, setUsername] = useState('');
-            const [password, setPassword] = useState('');
-            const [error, setError] = useState('');
-            const [isHovered, setIsHovered] = useState(false);
-
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                setError('');
-                if (!username.trim() || !password.trim()) {
-                    setError('Please fill in all fields.');
-                    return;
-                }
-                const users = JSON.parse(localStorage.getItem('aura_users') || '{}');
-                if (isLogin) {
-                    if (users[username] && users[username].password === password) {
-                        onLogin({ email: username, auraId: users[username].auraId, name: username });
-                    } else {
-                        setError('Invalid username or password.');
-                    }
-                } else {
-                    if (users[username]) {
-                        setError('Username is already taken.');
-                    } else {
-                        const randHex = () => Math.floor(0x1000 + Math.random() * 0xf000).toString(16).toUpperCase();
-                        const auraId = `AURA-${randHex()}-${randHex()}`;
-                        users[username] = { password, auraId };
-                        localStorage.setItem('aura_users', JSON.stringify(users));
-                        onLogin({ email: username, auraId, name: username });
-                    }
-                }
-            };
-
-            return (
-                <div style={{
-                    height: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, rgba(124, 58, 237, 0.08) 90.2%), #090d16',
-                    fontFamily: "'Inter', sans-serif", overflow: 'hidden', position: 'relative',
-                    perspective: '1000px'
-                }}>
-                    <div style={{ position: 'absolute', top: '-10%', left: '-10%', width: '40vw', height: '40vw', borderRadius: '50%', background: 'rgba(99, 102, 241, 0.15)', filter: 'blur(120px)' }}></div>
-                    <div style={{ position: 'absolute', bottom: '-10%', right: '-10%', width: '45vw', height: '45vw', borderRadius: '50%', background: 'rgba(124, 58, 237, 0.12)', filter: 'blur(140px)' }}></div>
-
-                    <div className="scale-up" 
-                        onMouseEnter={() => setIsHovered(true)}
-                        onMouseLeave={() => setIsHovered(false)}
-                        style={{
-                        width: '100%', maxWidth: 400, padding: '40px 32px',
-                        background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.4))', backdropFilter: 'blur(20px)',
-                        border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: 24,
-                        boxShadow: isHovered ? '0 40px 80px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255,255,255,0.2)' : '0 30px 60px rgba(0, 0, 0, 0.4), inset 0 1px 1px rgba(255,255,255,0.1)',
-                        color: 'white', display: 'flex', flexDirection: 'column', alignItems: 'center', zIndex: 10,
-                        transform: isHovered ? 'translateY(-5px) rotateX(2deg) rotateY(-2deg)' : 'translateY(0) rotateX(0) rotateY(0)',
-                        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-                    }}>
-                        <div style={{ marginBottom: 20, filter: 'drop-shadow(0 4px 12px rgba(99,102,241,0.5))', transform: 'translateZ(20px)' }}>
-                            {logoComponent}
-                        </div>
-
-                        <h2 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 28, fontWeight: 800, background: 'linear-gradient(135deg, #a5b4fc, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: 8, transform: 'translateZ(15px)' }}>
-                            Aura AI
-                        </h2>
-                        <p style={{ fontSize: 13, color: '#94a3b8', textAlign: 'center', lineHeight: 1.6, marginBottom: 28, maxWidth: 320, transform: 'translateZ(10px)' }}>
-                            {isLogin ? 'Sign in to access your personal AI workspace.' : 'Create an account to join the future.'}
-                        </p>
-
-                        {error && (
-                            <div style={{
-                                width: '100%', padding: '10px 14px', background: 'rgba(239, 68, 68, 0.15)',
-                                border: '1.5px solid rgba(239, 68, 68, 0.3)', borderRadius: 12,
-                                color: '#fca5a5', fontSize: 12, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16,
-                                transform: 'translateZ(10px)'
-                            }}>
-                                <i className="fas fa-exclamation-circle" style={{ flexShrink: 0 }}></i>
-                                <span>{error}</span>
-                            </div>
-                        )}
-
-                        <form onSubmit={handleSubmit} style={{ width: '100%', transform: 'translateZ(15px)' }}>
-                            <div style={{ marginBottom: 16 }}>
-                                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#cbd5e1', marginBottom: 6 }}>Username</label>
-                                <input type="text" value={username} onChange={e => setUsername(e.target.value)}
-                                    style={{
-                                        width: '100%', padding: '12px 16px', background: 'rgba(255,255,255,0.05)',
-                                        border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: 'white',
-                                        outline: 'none', transition: 'border-color 0.2s, background 0.2s', fontSize: 14
-                                    }}
-                                    onFocus={e => { e.target.style.borderColor = '#6366f1'; e.target.style.background = 'rgba(255,255,255,0.1)'; }}
-                                    onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(255,255,255,0.05)'; }}
-                                />
-                            </div>
-                            <div style={{ marginBottom: 24 }}>
-                                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#cbd5e1', marginBottom: 6 }}>Password</label>
-                                <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                                    style={{
-                                        width: '100%', padding: '12px 16px', background: 'rgba(255,255,255,0.05)',
-                                        border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, color: 'white',
-                                        outline: 'none', transition: 'border-color 0.2s, background 0.2s', fontSize: 14
-                                    }}
-                                    onFocus={e => { e.target.style.borderColor = '#6366f1'; e.target.style.background = 'rgba(255,255,255,0.1)'; }}
-                                    onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(255,255,255,0.05)'; }}
-                                />
-                            </div>
-                            <button type="submit" style={{
-                                width: '100%', padding: '12px', borderRadius: 12, border: 'none',
-                                background: 'linear-gradient(135deg, #6366f1, #a855f7)', color: 'white',
-                                fontSize: 14, fontWeight: 700, cursor: 'pointer',
-                                boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)',
-                                transition: 'transform 0.2s, box-shadow 0.2s'
-                            }}
-                            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(99, 102, 241, 0.6)'; }}
-                            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.4)'; }}
-                            >
-                                {isLogin ? 'Sign In' : 'Sign Up'}
-                            </button>
-                        </form>
-                        
-                        <div style={{ marginTop: 20, fontSize: 12, color: '#94a3b8', transform: 'translateZ(10px)' }}>
-                            {isLogin ? "Don't have an account? " : "Already have an account? "}
-                            <button onClick={() => { setIsLogin(!isLogin); setError(''); }}
-                                style={{ background: 'none', border: 'none', color: '#a5b4fc', cursor: 'pointer', fontWeight: 600, padding: 0 }}>
-                                {isLogin ? 'Sign up' : 'Sign in'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
+        /* ── Authentication Portal removed ── */
 
 
 
@@ -827,7 +713,7 @@
         const App = () => {
             /* ── Persistent state ── */
             const ls = k => localStorage.getItem(k);
-            const [account, setAccount] = useState(() => { try { return JSON.parse(ls('aura_account') || 'null'); } catch { return null; } });
+            const [account, setAccount] = useState({ email: 'User', auraId: 'AURA-DEFAULT', name: 'User' });
             const [chats, setChats] = useState(() => { try { return JSON.parse(ls('aura_chats') || '[]'); } catch { return []; } });
             const [chatId, setChatId] = useState(() => ls('aura_chat_id') || '');
             const [apiKey, setApiKey] = useState(() => ls('aura_key') || DEFAULT_KEY);
@@ -839,13 +725,18 @@
             const [mode, setMode] = useState('chat');
             const [input, setInput] = useState('');
             const [loading, setLoading] = useState(false);
-            const [sidebar, setSidebar] = useState(true);
+            const [sidebar, setSidebar] = useState(false); // Sidebar default off
             const [settings, setSettings] = useState(false);
             const [listening, setListening] = useState(false);
             const [voiceOut, setVoiceOut] = useState(false);
             const [profileDropdown, setProfileDropdown] = useState(false);
-
-
+            
+            /* ── Feature state ── */
+            const [plusMenu, setPlusMenu] = useState(false);
+            const [islandOpen, setIslandOpen] = useState(false);
+            const [dockOpen, setDockOpen] = useState(false);
+            const [uploadedFile, setUploadedFile] = useState(null);
+            
             /* ── Settings modal temps ── */
             const [tKey, setTKey] = useState(apiKey);
             const [tMdl, setTMdl] = useState(model);
@@ -930,7 +821,7 @@
             /* ── Image generation ── */
             const genImage = async (prompt, id) => {
                 const seed = Math.random() * 1e6 | 0;
-                const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
+                const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&model=flux&nologo=true&seed=${seed}`;
                 patchLast(id, { progress: 15, progressText: 'Initialising render engine...' });
                 try {
                     await new Promise((res, rej) => {
@@ -988,15 +879,24 @@
             /* ── Master send ── */
             const handleSend = async (e, forced = '') => {
                 if (e) e.preventDefault();
-                const raw = (forced || input).trim();
-                if (!raw || loading) return;
+                
+                let baseInput = (forced || input).trim();
+                let raw = baseInput;
+                let attachedFile = null;
+                
+                if (uploadedFile && !forced) {
+                    attachedFile = uploadedFile;
+                    setUploadedFile(null); // Clear after sending
+                }
+
+                if (!raw && !attachedFile || loading) return;
 
                 /* Slash command routing */
                 let activeMode = mode, prompt = raw;
                 if (raw.startsWith('/image ')) { activeMode = 'image'; prompt = raw.slice(7).trim(); }
                 else if (raw.startsWith('/video ')) { activeMode = 'video'; prompt = raw.slice(7).trim(); }
 
-                const userMsg = { role: 'user', content: raw };
+                const userMsg = { role: 'user', content: raw, attachment: attachedFile };
 
                 /* Init or select chat */
                 let id = chatId;
@@ -1050,7 +950,10 @@
                             model: mdl,
                             messages: [
                                 { role: 'system', content: sysPrmpt },
-                                ...cur.messages.slice(0, -1).map(m => ({ role: m.role, content: m.content }))
+                                ...cur.messages.slice(0, -1).map(m => ({ 
+                                    role: m.role, 
+                                    content: m.attachment ? `[Attached File: ${m.attachment.name}]\n\n--- FILE CONTENT ---\n${m.attachment.content}\n--- END OF FILE ---\n\n${m.content}` : m.content 
+                                }))
                             ],
                             max_tokens: 4096,
                             stream: true,
@@ -1110,7 +1013,7 @@
             const openSettings = () => { setTKey(apiKey); setTMdl(model); setTCMdl(customMdl); setTSys(sysPrmpt); setSettings(true); };
             const saveSettings = e => { e.preventDefault(); setApiKey(tKey); setModel(tMdl); setCustomMdl(tCMdl); setSysPrmpt(tSys); setSettings(false); };
 
-            const newChat = () => { setChatId(''); setInput(''); };
+            const newChat = () => { setChatId(''); setInput(''); setDockOpen(true); };
             const delChat = (id, e) => { e.stopPropagation(); setChats(p => p.filter(c => c.id !== id)); if (chatId === id) setChatId(''); };
             const clearAll = () => { if (confirm('Delete all chats?')) { setChats([]); setChatId(''); } };
             const copyText = (txt, e) => {
@@ -1122,153 +1025,146 @@
 
             /* ── Mode label/placeholder config ── */
             const modeConfig = {
-                chat: { ph: 'Message Aura AI…', head: 'How can I help you today?', sub: 'Ask questions, write text, debug code, or explore ideas.' },
+                chat: { ph: 'Message Aura AI v4.2…', head: 'How can I help you today?', sub: 'Ask questions, write text, debug code, or explore ideas.' },
                 voice: { ph: 'Or type a message (voice mode)…', head: 'Hello, I am listening…', sub: 'Speak your prompt clearly. Aura will respond aloud in voice mode.' },
                 image: { ph: 'Describe the image to generate…', head: 'Create stunning visuals', sub: 'Describe any scene, art, or design. Aura will synthesise it instantly.' },
                 video: { ph: 'Describe the animation to generate…', head: 'Create stunning videos', sub: 'Describe motion or scenes. Aura will synthesise a video loop instantly.' },
             };
 
             /* ═══════════════ RENDER ═══════════════ */
-            if (!account) {
-                return <AuthPortal onLogin={(acc) => { localStorage.setItem('aura_account', JSON.stringify(acc)); setAccount(acc); }} logoComponent={<Logo size={80} />} />;
-            }
-
             return (
                 <div style={{ height: '100vh', width: '100vw', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'transparent' }}>
 
-                    {/* ── TOP HEADER (Includes curvy tabs & actions) ── */}
-                    <header style={{
-                        background: 'rgba(15, 23, 42, 0.4)',
-                        backdropFilter: 'blur(16px)',
-                        borderBottom: '1px solid rgba(255,255,255,0.05)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        flexShrink: 0,
-                        zIndex: 20,
-                        boxShadow: '0 4px 30px rgba(0,0,0,0.2)'
-                    }}>
-                        {/* Top Row: Brand Info + Actions */}
-                        <div style={{
-                            height: 56,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '0 20px',
-                            borderBottom: '1px solid rgba(255,255,255,0.05)'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <Logo size={32} />
-                                <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: 18, color: '#f8fafc', letterSpacing: '-0.02em' }}>Aura AI</span>
-                                <span style={{ fontSize: 9, background: 'rgba(139, 92, 246, 0.2)', color: '#c084fc', fontWeight: 700, padding: '2px 8px', borderRadius: 99, fontFamily: 'monospace' }}>V3.0</span>
-                            </div>
 
-                            {/* Top Right Actions: Account Profile */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, position: 'relative' }}>
-                                {/* Profile Dropdown Trigger */}
-                                <button onClick={() => setProfileDropdown(p => !p)}
-                                    style={{
-                                        height: 34, padding: '0 10px', borderRadius: 8, background: '#f1f5f9',
-                                        border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 8,
-                                        cursor: 'pointer', transition: 'all 0.2s'
-                                    }}>
-                                    <div style={{
-                                        width: 22, height: 22, borderRadius: '50%', background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-                                        color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        fontSize: 10, fontWeight: 700, textTransform: 'uppercase'
-                                    }}>
-                                        {account?.email?.charAt(0) || 'U'}
-                                    </div>
-                                    <span style={{ fontSize: 11, fontWeight: 600, color: '#475569', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                        {account?.email?.split('@')[0]}
+
+                    {/* ── DYNAMIC ISLAND STATUS (TOP CENTER) ── */}
+                    <div style={{ position: 'fixed', top: 14, left: '50%', transform: 'translateX(-50%)', zIndex: 90, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <div style={{ 
+                                 background: 'rgba(15, 15, 18, 0.85)', backdropFilter: 'blur(16px)',
+                                 borderRadius: 20, padding: '6px 16px', display: 'flex', alignItems: 'center', gap: 10,
+                                 transition: 'all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                 minWidth: loading ? 170 : 110, height: 38, border: '1px solid rgba(255, 255, 255, 0.1)',
+                                 boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6)'
+                             }}>
+                             {loading ? (
+                                 <>
+                                    <div style={{ background: '#a855f7', width: 8, height: 8, borderRadius: '50%', boxShadow: '0 0 10px #a855f7', animation: 'pulse 1.5s infinite' }}></div>
+                                    <span style={{ fontSize: 12, fontWeight: 600, color: '#f8fafc' }}>
+                                        {activeChat?.messages[activeChat.messages.length - 1]?.type === 'image_loader' ? 'Generating Image...' : 'Aura is thinking...'}
                                     </span>
-                                    <i className={`fas fa-chevron-down`} style={{ fontSize: 9, color: '#94a3b8', transform: profileDropdown ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}></i>
-                                </button>
+                                 </>
+                             ) : (
+                                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                                     {uploadedFile ? (
+                                        <>
+                                            <i className="fas fa-file-alt" style={{ color: '#a855f7' }}></i>
+                                            <span style={{ fontSize: 12, color: '#f8fafc', fontWeight: 600 }}>{uploadedFile.name}</span>
+                                            <button onClick={(e) => { e.stopPropagation(); setUploadedFile(null); }} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', marginLeft: 4 }}><i className="fas fa-times"></i></button>
+                                        </>
+                                     ) : (
+                                        <>
+                                            <div style={{ background: '#22c55e', width: 7, height: 7, borderRadius: '50%', boxShadow: '0 0 8px #22c55e' }}></div>
+                                            <span style={{ fontSize: 12, color: '#f8fafc', fontWeight: 600 }}>Idle</span>
+                                        </>
+                                     )}
+                                 </div>
+                             )}
+                        </div>
+                    </div>
 
-                                {/* Profile Floating Menu Dropdown */}
-                                {profileDropdown && (
-                                    <>
-                                        <div style={{ position: 'fixed', inset: 0, zIndex: 30 }} onClick={() => setProfileDropdown(false)} />
-                                        <div className="scale-up" style={{
-                                            position: 'absolute', top: 44, right: 0, zIndex: 40,
-                                            width: 240, background: 'white', border: '1px solid #e2e8f0',
-                                            borderRadius: 12, boxShadow: '0 10px 25px rgba(0,0,0,0.15)', padding: 14
-                                        }}>
-                                            <div style={{ borderBottom: '1px solid #f1f5f9', paddingBottom: 10, marginBottom: 10 }}>
-                                                <div style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Aura Profile</div>
-                                                <div style={{ fontSize: 12, fontWeight: 600, color: '#0f172a', wordBreak: 'break-all', marginTop: 4 }}>{account?.email}</div>
-                                                <div style={{ fontSize: 9, color: '#64748b', marginTop: 6, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                                    <span style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '1px 4px', borderRadius: 3 }}>ID: {account?.auraId}</span>
-                                                </div>
-                                            </div>
+                    {/* ── FLOATING NAVIGATION DOCK (LEFT EDGE) ── */}
+                    <div style={{
+                        position: 'fixed', top: 14, left: 14, zIndex: 100,
+                        background: 'rgba(15, 15, 18, 0.85)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: 18, padding: dockOpen ? '10px' : '8px 4px', display: 'flex', flexDirection: 'column', alignItems: dockOpen ? 'stretch' : 'center', gap: 6, boxShadow: '0 12px 36px rgba(0,0,0,0.6)',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', overflow: 'hidden', maxHeight: 'calc(100vh - 40px)', width: dockOpen ? 240 : 52
+                    }}>
+                        {/* Collapse / Expand Toggle */}
+                        <button onClick={() => setDockOpen(!dockOpen)} 
+                            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: '#f8fafc', cursor: 'pointer', padding: '8px', borderRadius: 12, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.2s', alignSelf: dockOpen ? 'flex-end' : 'center' }} 
+                            title={dockOpen ? 'Collapse Navigation' : 'Expand Navigation'} 
+                            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'} 
+                            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}>
+                            {!dockOpen && <span style={{ fontSize: 12, fontWeight: 700, color: '#f8fafc', writingMode: 'vertical-rl', transform: 'rotate(180deg)', padding: '6px 0' }}>Aura</span>}
+                            <i className={`fas fa-chevron-${dockOpen ? 'left' : 'right'}`}></i>
+                        </button>
 
-                                            <button onClick={() => {
-                                                if (confirm('Are you sure you want to log out?')) {
-                                                    localStorage.removeItem('aura_account');
-                                                    setAccount(null);
-                                                    setProfileDropdown(false);
-                                                }
-                                            }}
-                                                style={{
-                                                    width: '100%', padding: '8px 10px', borderRadius: 8, background: '#fef2f2',
-                                                    color: '#ef4444', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                                                    display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', transition: 'all 0.15s'
-                                                }}>
-                                                <i className="fas fa-sign-out-alt"></i> Log Out
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+                        <div style={{ display: 'flex', flexDirection: dockOpen ? 'row' : 'column', gap: 6, justifyContent: 'center' }}>
+                            {/* Mode Toggles */}
+                            <button onClick={() => setMode('chat')} style={{ flex: dockOpen ? 1 : 'none', background: mode === 'chat' ? 'rgba(99, 102, 241, 0.25)' : 'transparent', border: mode === 'chat' ? '1px solid rgba(99, 102, 241, 0.4)' : '1px solid transparent', color: mode === 'chat' ? '#a5b4fc' : '#94a3b8', cursor: 'pointer', padding: '10px', borderRadius: 10, fontSize: 13, transition: 'all 0.2s' }} title="Chat Mode" onMouseEnter={e => e.currentTarget.style.background = mode === 'chat' ? 'rgba(99, 102, 241, 0.3)' : 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = mode === 'chat' ? 'rgba(99, 102, 241, 0.25)' : 'transparent'}>
+                                <i className="fas fa-comment-alt"></i>
+                            </button>
+                            <button onClick={() => setMode('image')} style={{ flex: dockOpen ? 1 : 'none', background: mode === 'image' ? 'rgba(168, 85, 247, 0.25)' : 'transparent', border: mode === 'image' ? '1px solid rgba(168, 85, 247, 0.4)' : '1px solid transparent', color: mode === 'image' ? '#c084fc' : '#94a3b8', cursor: 'pointer', padding: '10px', borderRadius: 10, fontSize: 13, transition: 'all 0.2s' }} title="Image Mode" onMouseEnter={e => e.currentTarget.style.background = mode === 'image' ? 'rgba(168, 85, 247, 0.3)' : 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = mode === 'image' ? 'rgba(168, 85, 247, 0.25)' : 'transparent'}>
+                                <i className="fas fa-image"></i>
+                            </button>
                         </div>
 
-                        {/* Bottom Row: Curvy, boxy conversation tabs list */}
+                        {/* Collapsed "New Chat" Button */}
+                        {!dockOpen && (
+                            <button onClick={newChat} style={{ background: 'linear-gradient(135deg, #6366f1, #a855f7)', border: 'none', color: '#fff', cursor: 'pointer', padding: '10px', borderRadius: 10, fontSize: 12, fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, animation: 'fadeIn 0.3s ease' }} title="New Chat">
+                                <i className="fas fa-plus"></i>
+                            </button>
+                        )}
+
+                        {/* Expanded Content with Spring Animation */}
                         <div style={{
-                            height: 44,
-                            background: 'transparent',
-                            display: 'flex',
-                            alignItems: 'flex-end',
+                            maxHeight: dockOpen ? '80vh' : 0,
+                            opacity: dockOpen ? 1 : 0,
                             overflow: 'hidden',
-                            paddingTop: 4
+                            transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            width: '100%',
+                            pointerEvents: dockOpen ? 'auto' : 'none'
                         }}>
-                            <div className="tab-container">
+                            <div style={{ height: 1, width: '100%', background: 'rgba(255,255,255,0.1)', margin: '4px 0' }} />
+                            
+                            <button onClick={() => setSettings(true)} style={{ background: 'transparent', border: 'none', color: '#f8fafc', cursor: 'pointer', padding: '10px', borderRadius: 10, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, transition: 'all 0.2s' }} title="Settings" onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                <i className="fas fa-cog"></i> Settings
+                            </button>
+                            
+                            {chats.length > 0 && <div style={{ height: 1, width: '100%', background: 'rgba(255,255,255,0.1)', margin: '4px 0' }} />}
+                            
+                            {/* Vertical Chat List */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, overflowY: 'auto', padding: '0 2px', scrollbarWidth: 'auto', msOverflowStyle: 'auto' }}>
                                 {chats.map(chat => (
-                                    <div key={chat.id}
-                                        onClick={() => setChatId(chat.id)}
-                                        className={`curvy-tab ${chat.id === chatId ? 'active' : ''}`}>
-                                        <i className="far fa-comment-alt" style={{ fontSize: 10, color: chat.id === chatId ? '#4f46e5' : '#94a3b8' }}></i>
-                                        <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                                            {chat.title}
-                                        </span>
-                                        <button onClick={(e) => delChat(chat.id, e)} className="curvy-tab-close" title="Delete conversation">
+                                    <div key={chat.id} onClick={() => setChatId(chat.id)}
+                                        style={{
+                                            padding: '8px 12px', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontSize: 13,
+                                            background: chat.id === chatId ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.25))' : 'transparent',
+                                            color: chat.id === chatId ? '#f8fafc' : '#cbd5e1', border: chat.id === chatId ? '1px solid rgba(168, 85, 247, 0.4)' : '1px solid transparent',
+                                        }}
+                                        onMouseEnter={e => { if (chat.id !== chatId) e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+                                        onMouseLeave={e => { if (chat.id !== chatId) e.currentTarget.style.background = 'transparent'; }}>
+                                        <i className="far fa-comment-alt" style={{ color: chat.id === chatId ? '#c084fc' : '#64748b', flexShrink: 0 }}></i>
+                                        <span style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{chat.title}</span>
+                                        <button onClick={(e) => delChat(chat.id, e)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px', marginLeft: 4, flexShrink: 0 }} title="Delete">
                                             <i className="fas fa-times"></i>
                                         </button>
                                     </div>
                                 ))}
-                                {/* Curvy Boxy new tab button */}
-                                <button onClick={newChat} className="new-tab-btn" title="Start a new chat session">
-                                    <i className="fas fa-plus"></i>
-                                </button>
                             </div>
-
-                            {/* Right side stats/controls in the tab bar */}
-                            {chats.length > 0 && (
-                                <div style={{ paddingRight: 20, paddingBottom: 6 }}>
-                                    <button onClick={clearAll}
-                                        style={{
-                                            background: 'none', border: 'none', cursor: 'pointer',
-                                            color: '#94a3b8', fontSize: 11, display: 'flex', alignItems: 'center', gap: 4
-                                        }}
-                                        onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
-                                        onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}>
-                                        <i className="far fa-trash-alt"></i> Clear All
+                            
+                            <div style={{ height: 1, width: '100%', background: 'rgba(255,255,255,0.1)', margin: '4px 0' }} />
+                            <div style={{ display: 'flex', gap: 6 }}>
+                                <button onClick={newChat} style={{ flex: 1, background: 'linear-gradient(135deg, #6366f1, #a855f7)', border: 'none', color: '#fff', cursor: 'pointer', padding: '10px 12px', borderRadius: 10, fontSize: 13, fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} title="New Chat">
+                                    <i className="fas fa-plus"></i> New Chat
+                                </button>
+                                {chats.length > 0 && (
+                                    <button onClick={clearAll} style={{ background: 'transparent', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', cursor: 'pointer', padding: '10px', borderRadius: 10, fontSize: 13 }} title="Clear All Chats" onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.15)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                        <i className="far fa-trash-alt"></i>
                                     </button>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
-                    </header>
+                    </div>
 
-                    {/* ── MAIN PANEL ── */}
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', overflow: 'hidden' }}>
+
+                    {/* ── MAIN LAYOUT ── */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'row', minWidth: 0, position: 'relative', overflow: 'hidden' }}>
+                        
+                        {/* ── MAIN PANEL ── */}
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative', overflow: 'hidden' }}>
 
                         {/* Messages / Welcome */}
                         <div style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
@@ -1279,11 +1175,11 @@
                                         <Logo size={60} />
                                     </div>
                                     <h1 style={{ fontSize: 32, fontWeight: 800, background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: 10, fontFamily: 'Outfit,sans-serif' }}>
-                                        How can I help you today?
+                                        {modeConfig[mode]?.head || 'How can I help you today?'}
                                     </h1>
 
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, width: '100%', textAlign: 'left' }}>
-                                        {STARTERS.map((s, i) => (
+                                        {(mode === 'image' ? IMAGE_STARTERS : STARTERS).map((s, i) => (
                                             <div key={i} onClick={() => handleSend(null, s.prompt)}
                                                 className="fade-in"
                                                 style={{
@@ -1321,14 +1217,36 @@
                                             )}
 
                                             <div style={{ maxWidth: '82%', display: 'flex', flexDirection: 'column', gap: 4 }}>
-                                                <div className={m.role === 'user' ? 'bubble-user' : 'bubble-ai'} style={{ padding: '12px 16px' }}>
+                                                <div style={{ padding: '12px 16px' }}>
 
                                                     {/* Standard text bubble */}
                                                     {(!m.type || m.type === 'text') && m.role === 'user' && (
-                                                        <div style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{m.content}</div>
+                                                        <div style={{
+                                                            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2))', border: '1px solid rgba(168, 85, 247, 0.3)',
+                                                            padding: '12px 18px', borderRadius: '18px 18px 4px 18px', display: 'inline-block',
+                                                            boxShadow: '0 4px 20px rgba(0,0,0,0.2)', fontSize: 15,
+                                                            color: '#f8fafc', wordBreak: 'break-word'
+                                                        }}>
+                                                            {m.attachment && (
+                                                                <div style={{ padding: '8px 12px', background: 'rgba(255,255,255,0.05)', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10, marginBottom: m.content ? 8 : 0 }}>
+                                                                    <i className="fas fa-file-alt" style={{ color: '#a855f7', fontSize: 20 }}></i>
+                                                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                                                        <div style={{ fontSize: 12, fontWeight: 700, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.attachment.name}</div>
+                                                                        <div style={{ fontSize: 10, color: '#cbd5e1' }}>Document Attached</div>
+                                                                    </div>
+                                                                </div>
+                                                            )}
+                                                            {m.content && <div style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{m.content}</div>}
+                                                        </div>
                                                     )}
                                                     {(!m.type || m.type === 'text') && m.role === 'assistant' && (
-                                                        <div className="prose" dangerouslySetInnerHTML={{ __html: renderMd(m.content) }} />
+                                                        <div className="prose" style={{
+                                                            background: 'rgba(24, 24, 27, 0.8)', backdropFilter: 'blur(12px)',
+                                                            border: '1px solid rgba(255, 255, 255, 0.05)',
+                                                            padding: '12px 18px', borderRadius: '18px 18px 18px 4px', display: 'inline-block',
+                                                            boxShadow: '0 4px 20px rgba(0,0,0,0.3)', fontSize: 15,
+                                                            color: '#f8fafc', wordBreak: 'break-word'
+                                                        }} dangerouslySetInnerHTML={{ __html: renderMd(m.content) }} />
                                                     )}
 
                                                     {/* Image card */}
@@ -1383,33 +1301,97 @@
                         }}>
                             <div style={{ width: '100%', maxWidth: 720, pointerEvents: 'auto' }}>
                                 <form onSubmit={handleSend} style={{
-                                    background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(20px)', borderRadius: 24, display: 'flex', alignItems: 'center',
-                                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.05)',
+                                    background: 'rgba(24, 24, 27, 0.6)', backdropFilter: 'blur(20px)', borderRadius: 24, display: 'flex', alignItems: 'center',
+                                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                                    boxShadow: '0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05)',
                                     padding: '8px 10px 8px 8px',
                                     transition: 'border-color 0.3s, box-shadow 0.3s',
                                 }}
-                                    onFocusCapture={e => { e.currentTarget.style.borderColor = 'rgba(165, 180, 252, 0.4)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(99, 102, 241, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1)'; }}
-                                    onBlurCapture={e => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.05)'; }}>
+                                    onFocusCapture={e => { e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.5)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(168, 85, 247, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.05)'; }}
+                                    onBlurCapture={e => { e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.05)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.05)'; }}>
+
+                                    {/* Action Menu Toggle */}
+                                    <div style={{ position: 'relative' }}>
+                                        <button type="button" onClick={() => setPlusMenu(!plusMenu)}
+                                            style={{
+                                                width: 44, height: 44, borderRadius: 16, border: 'none', cursor: 'pointer',
+                                                background: plusMenu ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                                                color: plusMenu ? '#a5b4fc' : '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                fontSize: 16, transition: 'all 0.2s'
+                                            }}>
+                                            <i className="fas fa-plus" style={{ transform: plusMenu ? 'rotate(45deg)' : 'none', transition: 'transform 0.2s' }}></i>
+                                        </button>
+                                        
+                                        {plusMenu && (
+                                            <>
+                                                <div style={{ position: 'fixed', inset: 0, zIndex: 10 }} onClick={() => setPlusMenu(false)} />
+                                                <div className="scale-up" style={{
+                                                    position: 'absolute', bottom: 54, left: 0, zIndex: 20, width: 180,
+                                                    background: 'rgba(24, 24, 27, 0.95)', backdropFilter: 'blur(20px)',
+                                                    border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: 16, padding: 8,
+                                                    boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                                                }}>
+                                                    <button type="button" onClick={() => { setMode('image'); setPlusMenu(false); }} style={{ width: '100%', padding: '10px 12px', background: 'transparent', border: 'none', color: '#f1f5f9', textAlign: 'left', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13 }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                        <i className="fas fa-image" style={{ color: '#a855f7', width: 16 }}></i> Generate Image
+                                                    </button>
+                                                    <button type="button" onClick={() => { document.getElementById('file-upload').click(); setPlusMenu(false); }} style={{ width: '100%', padding: '10px 12px', background: 'transparent', border: 'none', color: '#f1f5f9', textAlign: 'left', borderRadius: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, fontSize: 13 }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                                                        <i className="fas fa-file-upload" style={{ color: '#6366f1', width: 16 }}></i> Upload File
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
+                                        <input type="file" id="file-upload" style={{ display: 'none' }} onChange={async e => {
+                                            const file = e.target.files[0];
+                                            if (file) {
+                                                const ext = file.name.split('.').pop().toLowerCase();
+                                                if (ext === 'docx' || ext === 'doc') {
+                                                    if (window.mammoth) {
+                                                        const arrayBuffer = await file.arrayBuffer();
+                                                        try {
+                                                            const result = await mammoth.extractRawText({ arrayBuffer });
+                                                            setUploadedFile({ name: file.name, content: result.value });
+                                                        } catch (err) {
+                                                            alert("Failed to parse DOCX file.");
+                                                        }
+                                                    } else {
+                                                        alert("Mammoth.js not loaded.");
+                                                    }
+                                                } else {
+                                                    const reader = new FileReader();
+                                                    reader.onload = (re) => {
+                                                        setUploadedFile({ name: file.name, content: re.target.result });
+                                                    };
+                                                    reader.readAsText(file);
+                                                }
+                                            }
+                                            e.target.value = ''; // Reset input so we can upload the same file again if needed
+                                        }} />
+                                    </div>
 
                                     <input
                                         type="text"
                                         value={input}
                                         onChange={e => setInput(e.target.value)}
-                                        placeholder={modeConfig[mode]?.ph || "Message Aura AI..."}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleSend(e);
+                                            }
+                                        }}
+                                        placeholder={modeConfig[mode]?.ph || "Message Aura AI v4.2..."}
                                         disabled={loading}
                                         autoFocus
                                         style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 15, color: 'white', padding: '0 16px' }}
                                     />
 
-                                    <button type="submit" disabled={loading || !input.trim()}
+                                    <button type="submit" disabled={loading || (!input.trim() && !uploadedFile)}
                                         style={{
-                                            width: 44, height: 44, borderRadius: 16, border: 'none', cursor: (loading || !input.trim()) ? 'not-allowed' : 'pointer',
-                                            background: (loading || !input.trim()) ? 'rgba(255, 255, 255, 0.05)' : 'linear-gradient(135deg, #6366f1, #a855f7)',
-                                            color: (loading || !input.trim()) ? 'rgba(255, 255, 255, 0.2)' : 'white',
+                                            width: 44, height: 44, borderRadius: 16, border: 'none', cursor: (loading || (!input.trim() && !uploadedFile)) ? 'not-allowed' : 'pointer',
+                                            background: (loading || (!input.trim() && !uploadedFile)) ? 'rgba(255, 255, 255, 0.05)' : 'linear-gradient(135deg, #6366f1, #a855f7)',
+                                            color: (loading || (!input.trim() && !uploadedFile)) ? 'rgba(255, 255, 255, 0.2)' : 'white',
                                             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
                                             flexShrink: 0, transition: 'all 0.2s',
-                                            boxShadow: (loading || !input.trim()) ? 'none' : '0 4px 15px rgba(99, 102, 241, 0.3)',
+                                            boxShadow: (loading || (!input.trim() && !uploadedFile)) ? 'none' : '0 4px 15px rgba(168, 85, 247, 0.3)',
                                         }}>
                                         <i className="fas fa-arrow-up"></i>
                                     </button>
@@ -1420,6 +1402,7 @@
                                 </p>
                             </div>
                         </div>
+                    </div>
                     </div>
 
                     {/* ── SETTINGS MODAL ── */}
@@ -1457,10 +1440,7 @@
                                             onFocus={e => e.target.style.borderColor = '#6366f1'}
                                             onBlur={e => e.target.style.borderColor = '#e2e8f0'}>
                                             <option value="google/gemini-2.5-flash">Google Gemini 2.5 Flash (Default)</option>
-                                            <option value="google/gemini-2.5-pro">Google Gemini 2.5 Pro</option>
                                             <option value="deepseek/deepseek-chat">DeepSeek V3</option>
-                                            <option value="meta-llama/llama-3-8b-instruct:free">Meta Llama 3 8B (Free)</option>
-                                            <option value="custom">Custom model…</option>
                                         </select>
                                     </div>
 
